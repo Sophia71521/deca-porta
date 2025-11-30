@@ -29,10 +29,26 @@ User: ${message}`
 
         const data = await response.json();
 
+        console.log('Hugging Face response status:', response.status);
+        console.log('Hugging Face response data:', data);
+
+        // If error from Hugging Face, pass it through with details
+        if (!response.ok) {
+            return res.status(response.status).json({
+                error: data.error || 'API Error',
+                details: data,
+                status: response.status
+            });
+        }
+
         // Return the response to the client
-        res.status(response.status).json(data);
+        res.status(200).json(data);
     } catch (error) {
         console.error('Error calling Hugging Face API:', error);
-        res.status(500).json({ error: 'Failed to fetch from AI' });
+        res.status(500).json({
+            error: 'Failed to fetch from AI',
+            message: error.message,
+            details: error.toString()
+        });
     }
 }
