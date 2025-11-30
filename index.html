@@ -856,6 +856,32 @@
             }
         ];
 
+        // ==================== PERSONAL EVENTS ====================
+        // Get personal events from localStorage for current user
+        function getPersonalEvents() {
+            const currentUser = localStorage.getItem('currentUser');
+            if (!currentUser) return [];
+
+            const key = `personalEvents_${currentUser}`;
+            const stored = localStorage.getItem(key);
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        // Save personal events to localStorage for current user
+        function savePersonalEvents(events) {
+            const currentUser = localStorage.getItem('currentUser');
+            if (!currentUser) return;
+
+            const key = `personalEvents_${currentUser}`;
+            localStorage.setItem(key, JSON.stringify(events));
+        }
+
+        // Get all events (DECA + personal)
+        function getAllEvents() {
+            const personalEvents = getPersonalEvents();
+            return [...REAL_DECA_EVENTS, ...personalEvents];
+        }
+
         function displayEvents() {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -1131,25 +1157,6 @@
             document.getElementById('addEventForm').reset();
         }
 
-        // Get personal events from localStorage for current user
-        function getPersonalEvents() {
-            const currentUser = localStorage.getItem('currentUser');
-            if (!currentUser) return [];
-
-            const key = `personalEvents_${currentUser}`;
-            const stored = localStorage.getItem(key);
-            return stored ? JSON.parse(stored) : [];
-        }
-
-        // Save personal events to localStorage for current user
-        function savePersonalEvents(events) {
-            const currentUser = localStorage.getItem('currentUser');
-            if (!currentUser) return;
-
-            const key = `personalEvents_${currentUser}`;
-            localStorage.setItem(key, JSON.stringify(events));
-        }
-
         // Save new event from form
         function saveNewEvent(e) {
             e.preventDefault();
@@ -1175,12 +1182,6 @@
 
             // Show success message
             alert('Event added successfully!');
-        }
-
-        // Get all events (DECA + personal)
-        function getAllEvents() {
-            const personalEvents = getPersonalEvents();
-            return [...REAL_DECA_EVENTS, ...personalEvents];
         }
 
         // ==================== PRACTICE - CLUSTERS ====================
