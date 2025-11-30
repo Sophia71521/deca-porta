@@ -1176,12 +1176,16 @@
             personalEvents.push(newEvent);
             savePersonalEvents(personalEvents);
 
-            // Close modal and refresh events display
+            // Close modal
             closeAddModal();
+
+            // Refresh events display BEFORE showing alert
             displayEvents();
 
-            // Show success message
-            alert('Event added successfully!');
+            // Small delay to ensure display updates before alert
+            setTimeout(() => {
+                alert('Event added successfully! Your event "' + newEvent.name + '" has been added.');
+            }, 100);
         }
 
         // ==================== PRACTICE - CLUSTERS ====================
