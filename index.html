@@ -618,12 +618,10 @@
         }
 
         function logout() {
-            if (confirm('Are you sure you want to logout?')) {
-                localStorage.removeItem('isLoggedIn');
-                localStorage.removeItem('currentUser');
-                localStorage.removeItem('userName');
-                location.reload();
-            }
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('userName');
+            location.reload();
         }
 
         // Check if user is already logged in on page load
@@ -1209,22 +1207,12 @@
             // Close modal
             closeAddModal();
 
-            // Refresh events display BEFORE showing alert
+            // Refresh events display
             displayEvents();
-
-            // Small delay to ensure display updates before alert
-            setTimeout(() => {
-                alert('Event added successfully! Your event "' + newEvent.name + '" has been added.\n\nTotal personal events: ' + saved.length);
-            }, 100);
         }
 
         // Delete a personal event
         function deletePersonalEvent(eventName, eventDate) {
-            // Confirm deletion
-            if (!confirm(`Are you sure you want to delete "${eventName}"?\n\nThis action cannot be undone.`)) {
-                return;
-            }
-
             console.log('Deleting event:', eventName, eventDate);
 
             // Get current personal events
@@ -1242,9 +1230,6 @@
 
             // Refresh display
             displayEvents();
-
-            // Show success message
-            alert(`Event "${eventName}" has been deleted successfully.\n\nRemaining personal events: ${updatedEvents.length}`);
         }
 
         // ==================== PRACTICE - CLUSTERS ====================
