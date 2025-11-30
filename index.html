@@ -940,6 +940,15 @@
             const isPast = daysUntil < 0;
             const personalBadge = event.personal ? '<span class="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-semibold">Personal</span>' : '';
 
+            // Delete button only for personal events
+            const deleteButton = event.personal ? `
+                <button onclick="event.stopPropagation(); deletePersonalEvent('${event.name.replace(/'/g, "\\'")}', '${event.date}');"
+                        class="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition ml-2"
+                        title="Delete this event">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            ` : '';
+
             return `
                 <div onclick="showEventDetails('${event.name.replace(/'/g, "\\'")}')" class="bg-white rounded-xl shadow-sm p-6 mb-4 cursor-pointer hover:shadow-lg transition border-l-4 border-${color}-500 ${isPast ? 'opacity-75' : ''}">
                     <div class="flex items-center gap-4">
@@ -952,7 +961,10 @@
                             <p class="text-gray-600"><i class="far fa-calendar mr-2"></i>${eventDate.toLocaleDateString()}</p>
                             <p class="text-gray-600"><i class="fas fa-map-marker-alt mr-2"></i>${event.location}</p>
                         </div>
-                        <span class="px-4 py-2 bg-${color}-100 text-${color}-700 rounded-full font-semibold">${event.type}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="px-4 py-2 bg-${color}-100 text-${color}-700 rounded-full font-semibold">${event.type}</span>
+                            ${deleteButton}
+                        </div>
                     </div>
                 </div>
             `;
@@ -1204,6 +1216,35 @@
             setTimeout(() => {
                 alert('Event added successfully! Your event "' + newEvent.name + '" has been added.\n\nTotal personal events: ' + saved.length);
             }, 100);
+        }
+
+        // Delete a personal event
+        function deletePersonalEvent(eventName, eventDate) {
+            // Confirm deletion
+            if (!confirm(`Are you sure you want to delete "${eventName}"?\n\nThis action cannot be undone.`)) {
+                return;
+            }
+
+            console.log('Deleting event:', eventName, eventDate);
+
+            // Get current personal events
+            const personalEvents = getPersonalEvents();
+            console.log('Events before delete:', personalEvents);
+
+            // Filter out the event to delete (match by both name and date for accuracy)
+            const updatedEvents = personalEvents.filter(event => {
+                return !(event.name === eventName && event.date === eventDate);
+            });
+            console.log('Events after delete:', updatedEvents);
+
+            // Save updated events
+            savePersonalEvents(updatedEvents);
+
+            // Refresh display
+            displayEvents();
+
+            // Show success message
+            alert(`Event "${eventName}" has been deleted successfully.\n\nRemaining personal events: ${updatedEvents.length}`);
         }
 
         // ==================== PRACTICE - CLUSTERS ====================
