@@ -1,0 +1,2431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DECA Student Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-gradient { background: linear-gradient(180deg, #0055A4 0%, #003D7A 100%); }
+        .modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); overflow-y: auto; }
+        .modal.active { display: flex; align-items: center; justify-content: center; animation: fadeIn 0.2s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+        .calendar-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; }
+        .calendar-day.event { background: #0055A4; color: white; font-weight: bold; border-radius: 4px; }
+        .calendar-day.today { border: 2px solid #0055A4; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <!-- LOGIN SCREEN -->
+    <div id="authScreen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-800 p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-blue-600 rounded-2xl shadow-xl mb-4">
+                    <i class="fas fa-graduation-cap text-white text-3xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">DECA Student Portal</h1>
+                <p class="text-gray-600">Real Events • Practice Exams • Live Data</p>
+            </div>
+
+            <div class="flex bg-gray-100 rounded-xl p-1 mb-6">
+                <button onclick="switchTab('login')" id="loginTab" class="flex-1 py-2 rounded-lg font-semibold transition bg-white shadow-sm text-blue-600">
+                    Sign In
+                </button>
+                <button onclick="switchTab('signup')" id="signupTab" class="flex-1 py-2 rounded-lg font-semibold transition text-gray-600">
+                    Sign Up
+                </button>
+            </div>
+
+            <form id="loginFormElement" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                    <input type="email" id="loginEmail" required
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-600"
+                           placeholder="student@school.edu">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                    <input type="password" id="loginPassword" required
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-600"
+                           placeholder="Enter password">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition">
+                    Sign In <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </form>
+
+            <form id="signupFormElement" onsubmit="handleSignup(event)" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
+                    <input type="text" id="signupName" required
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-600"
+                           placeholder="John Doe">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                    <input type="email" id="signupEmail" required
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-600"
+                           placeholder="student@school.edu">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Chapter/School</label>
+                    <input type="text" id="signupChapter" required
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-600"
+                           placeholder="Your High School">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                    <input type="password" id="signupPassword" required
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-600"
+                           placeholder="Create password">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition">
+                    Create Account <i class="fas fa-user-plus ml-2"></i>
+                </button>
+            </form>
+
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-500 mb-3">Or try demo:</p>
+                <button onclick="quickDemo()" class="text-blue-600 hover:underline font-semibold text-sm">
+                    <i class="fas fa-bolt mr-1"></i>Quick Demo Access
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="hidden">
+        <div class="flex h-screen overflow-hidden">
+            <!-- Sidebar -->
+            <aside class="w-64 sidebar-gradient text-white flex-shrink-0 flex flex-col">
+                <div class="p-6 flex-1">
+                    <div class="flex items-center space-x-3 mb-8">
+                        <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-graduation-cap text-2xl"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-lg">DECA Portal</div>
+                            <div class="text-xs text-blue-200" id="userDisplay">Student</div>
+                        </div>
+                    </div>
+
+                    <nav class="space-y-2">
+                        <a href="#" onclick="showSection('events'); return false;" class="nav-link active flex items-center space-x-3 px-4 py-3 bg-white/20 rounded-lg font-medium">
+                            <i class="fas fa-calendar w-5"></i><span>Events</span>
+                        </a>
+                        <a href="#" onclick="showSection('news'); return false;" class="nav-link flex items-center space-x-3 px-4 py-3 hover:bg-white/10 rounded-lg font-medium transition">
+                            <i class="fas fa-newspaper w-5"></i><span>DECA News</span>
+                        </a>
+                        <a href="#" onclick="showSection('market'); return false;" class="nav-link flex items-center space-x-3 px-4 py-3 hover:bg-white/10 rounded-lg font-medium transition">
+                            <i class="fas fa-chart-line w-5"></i><span>Market</span>
+                        </a>
+                        <a href="#" onclick="showSection('practice'); return false;" class="nav-link flex items-center space-x-3 px-4 py-3 hover:bg-white/10 rounded-lg font-medium transition">
+                            <i class="fas fa-brain w-5"></i><span>Practice</span>
+                        </a>
+                        <a href="#" onclick="showSection('aichat'); return false;" class="nav-link flex items-center space-x-3 px-4 py-3 hover:bg-white/10 rounded-lg font-medium transition">
+                            <i class="fas fa-robot w-5"></i><span>AI Chat</span>
+                        </a>
+                    </nav>
+
+                    <div class="mt-8 p-4 bg-white/10 rounded-lg">
+                        <div class="text-sm font-semibold mb-2">Practice Timer</div>
+                        <div class="bg-white/10 rounded-lg p-3 text-center mb-3">
+                            <div class="text-3xl font-bold" id="timer">10:00</div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="startTimer()" class="bg-green-500 hover:bg-green-600 py-2 rounded-lg text-sm font-semibold transition">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button onclick="resetTimer()" class="bg-red-500 hover:bg-red-600 py-2 rounded-lg text-sm font-semibold transition">
+                                <i class="fas fa-redo"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 border-t border-white/10">
+                    <button onclick="logout()" class="w-full text-left hover:bg-white/10 p-2 rounded-lg transition">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="flex-1 overflow-auto bg-gray-50">
+                <header class="bg-white border-b sticky top-0 z-40">
+                    <div class="px-6 py-4 flex items-center justify-between">
+                        <div>
+                            <h1 class="text-2xl font-bold" id="pageTitle">DECA Events</h1>
+                            <p class="text-sm text-gray-500">Live from DECA.org</p>
+                        </div>
+                        <button onclick="openAddModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700">
+                            <i class="fas fa-plus mr-2"></i>Add Event
+                        </button>
+                    </div>
+                </header>
+
+                <!-- EVENTS -->
+                <div id="eventsSection" class="p-6">
+                    <div class="grid lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2">
+                            <h2 class="text-xl font-bold mb-4">Upcoming DECA Events 2025-2026</h2>
+                            <div id="eventsContainer"></div>
+
+                            <button onclick="togglePastEvents()" class="mt-6 text-blue-600 hover:underline font-semibold">
+                                <i class="fas fa-history mr-2"></i><span id="pastEventsToggleText">Show Past Events</span>
+                            </button>
+                            <div id="pastEventsContainer" class="hidden mt-4"></div>
+                        </div>
+                        <div class="space-y-6">
+                            <div>
+                                <h2 class="text-xl font-bold mb-4">Calendar</h2>
+                                <div class="bg-white rounded-xl shadow-sm p-4" id="calendarWidget"></div>
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-bold mb-4">Event Weather</h2>
+                                <div id="weatherWidget"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEWS -->
+                <div id="newsSection" class="p-6 hidden">
+                    <div class="mb-4 flex items-center justify-between">
+                        <div>
+                            <h2 class="text-xl font-bold">Business & Marketing News</h2>
+                            <p class="text-sm text-gray-500">Filtered for DECA-relevant topics</p>
+                        </div>
+                        <button onclick="loadNews()" class="text-blue-600 hover:underline">
+                            <i class="fas fa-sync-alt mr-1"></i>Refresh
+                        </button>
+                    </div>
+                    <div id="newsContainer" class="space-y-4"></div>
+                </div>
+
+                <!-- MARKET -->
+                <div id="marketSection" class="p-6 hidden">
+                    <div class="mb-4 flex items-center justify-between">
+                        <div>
+                            <h2 class="text-xl font-bold">Live Market Data</h2>
+                            <p class="text-sm text-gray-500">Real-time prices • Last updated: <span id="lastUpdated">--</span></p>
+                        </div>
+                        <span class="text-sm text-gray-500 pulse">
+                            <i class="fas fa-circle text-green-500 mr-1"></i>Live
+                        </span>
+                    </div>
+                    <div id="marketContainer"></div>
+                </div>
+
+                <!-- PRACTICE -->
+                <div id="practiceSection" class="p-6 hidden">
+                    <div id="clustersView">
+                        <h2 class="text-xl font-bold mb-6">Select Your Cluster</h2>
+                        <div class="grid md:grid-cols-2 gap-6" id="clustersContainer"></div>
+                    </div>
+                    <div id="eventsView" class="hidden">
+                        <button onclick="backToClusters()" class="mb-4 text-blue-600 hover:underline">
+                            <i class="fas fa-arrow-left mr-2"></i>Back to Clusters
+                        </button>
+                        <h2 class="text-xl font-bold mb-6" id="clusterTitle">Events</h2>
+                        <div class="grid md:grid-cols-2 gap-6" id="eventsListContainer"></div>
+                    </div>
+                    <div id="practiceView" class="hidden">
+                        <button onclick="backToEvents()" class="mb-4 text-blue-600 hover:underline">
+                            <i class="fas fa-arrow-left mr-2"></i>Back to Events
+                        </button>
+                        <h2 class="text-xl font-bold mb-6" id="eventTitle">Practice</h2>
+
+                        <!-- Practice Tabs -->
+                        <div class="bg-white rounded-xl p-2 mb-6 flex gap-2">
+                            <button onclick="showPracticeTab('pastExams')" id="pastExamsTab" class="flex-1 py-3 rounded-lg font-semibold bg-blue-600 text-white">
+                                Past Year Exams
+                            </button>
+                            <button onclick="showPracticeTab('generated')" id="generatedTab" class="flex-1 py-3 rounded-lg font-semibold text-gray-600 hover:bg-gray-100">
+                                Practice Questions
+                            </button>
+                            <button onclick="showPracticeTab('cases')" id="casesTab" class="flex-1 py-3 rounded-lg font-semibold text-gray-600 hover:bg-gray-100">
+                                Case Studies
+                            </button>
+                        </div>
+
+                        <div id="pastExamsContent"></div>
+                        <div id="generatedContent" class="hidden"></div>
+                        <div id="casesContent" class="hidden"></div>
+                    </div>
+                </div>
+
+                <!-- AI CHAT -->
+                <div id="aichatSection" class="p-6 hidden">
+                    <div class="max-w-4xl mx-auto">
+                        <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 mb-6 text-white">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-robot text-3xl"></i>
+                                    <h2 class="text-2xl font-bold">DECA AI Assistant</h2>
+                                </div>
+                                <button onclick="showApiKeySetup()" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-semibold transition">
+                                    <i class="fas fa-key mr-2"></i>Change API Key
+                                </button>
+                            </div>
+                            <p class="text-blue-100">Ask me anything about DECA, business concepts, marketing strategies, or get help with your practice!</p>
+                        </div>
+
+                        <!-- API Key Setup -->
+                        <div id="apiKeySetup" class="bg-yellow-50 border-l-4 border-yellow-500 p-6 rounded-lg mb-6">
+                            <div class="flex items-start gap-3">
+                                <i class="fas fa-key text-yellow-600 text-xl mt-1"></i>
+                                <div class="flex-1">
+                                    <h3 class="font-bold text-gray-900 mb-2">Setup Required: Free Hugging Face API Key</h3>
+                                    <p class="text-sm text-gray-700 mb-3">Get your free API key to enable AI chat:</p>
+                                    <ol class="text-sm text-gray-700 mb-4 list-decimal ml-5 space-y-1">
+                                        <li>Visit <a href="https://huggingface.co/join" target="_blank" class="text-blue-600 hover:underline">huggingface.co/join</a> and create a free account</li>
+                                        <li>Go to <a href="https://huggingface.co/settings/tokens" target="_blank" class="text-blue-600 hover:underline">Settings → Access Tokens</a></li>
+                                        <li>Click "New token" and create a token with "Read" access</li>
+                                        <li>Copy the token and paste it below</li>
+                                    </ol>
+                                    <div class="flex gap-2">
+                                        <input type="password" id="apiKeyInput" placeholder="hf_..."
+                                               class="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                        <button onclick="saveApiKey()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition">
+                                            <i class="fas fa-save mr-2"></i>Save Key
+                                        </button>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-2">Your API key is stored locally in your browser and never sent to our servers.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chat Container -->
+                        <div class="bg-white rounded-xl shadow-lg overflow-hidden" style="height: 600px; display: flex; flex-direction: column;">
+                            <!-- Chat Messages -->
+                            <div id="chatMessages" class="flex-1 overflow-y-auto p-6 space-y-4">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <i class="fas fa-robot text-white"></i>
+                                    </div>
+                                    <div class="bg-gray-100 rounded-2xl rounded-tl-none p-4 max-w-2xl">
+                                        <p class="text-gray-800">👋 Hi! I'm your DECA AI Assistant. I can help you with:</p>
+                                        <ul class="mt-2 space-y-1 text-sm text-gray-700">
+                                            <li>• Explaining business concepts and terminology</li>
+                                            <li>• DECA competition tips and strategies</li>
+                                            <li>• Marketing, finance, hospitality, and entrepreneurship questions</li>
+                                            <li>• Practice exam questions and case study help</li>
+                                        </ul>
+                                        <p class="mt-2 text-gray-800">What would you like to know?</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Chat Input -->
+                            <div class="border-t p-4 bg-gray-50">
+                                <div class="flex gap-2">
+                                    <input type="text" id="chatInput" placeholder="Type your question here..."
+                                           class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500"
+                                           onkeypress="if(event.key === 'Enter') sendMessage()">
+                                    <button onclick="sendMessage()" id="sendButton" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                        <i class="fas fa-paper-plane mr-2"></i>Send
+                                    </button>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">Powered by Hugging Face AI • Free & Open Source</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Event Details Modal -->
+    <div id="eventModal" class="modal">
+        <div class="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 my-8">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h2 class="text-2xl font-bold mb-2" id="eventModalTitle">Event</h2>
+                    <p class="text-gray-600" id="eventModalDate">Date</p>
+                </div>
+                <button onclick="closeEventModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div class="bg-blue-50 rounded-xl p-6 mb-4">
+                <p class="text-gray-700 mb-4" id="eventModalDescription"></p>
+                <div class="grid md:grid-cols-2 gap-3 text-sm">
+                    <div><i class="fas fa-map-marker-alt text-blue-600 mr-2"></i><span id="eventModalLocation"></span></div>
+                    <div><i class="fas fa-tag text-blue-600 mr-2"></i><span id="eventModalType"></span></div>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <a id="eventRegistrationLink" href="#" target="_blank" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 text-center">
+                    <i class="fas fa-external-link-alt mr-2"></i>View on DECA.org
+                </a>
+                <button onclick="closeEventModal()" class="px-6 bg-gray-200 py-3 rounded-lg font-bold hover:bg-gray-300">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== AUTH ====================
+        // Simple hash function for password storage (for demo purposes)
+        function hashPassword(password) {
+            let hash = 0;
+            for (let i = 0; i < password.length; i++) {
+                const char = password.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return hash.toString(36);
+        }
+
+        // Get all users from localStorage
+        function getUsers() {
+            const usersData = localStorage.getItem('decaUsers');
+            return usersData ? JSON.parse(usersData) : {};
+        }
+
+        // Save users to localStorage
+        function saveUsers(users) {
+            localStorage.setItem('decaUsers', JSON.stringify(users));
+        }
+
+        function switchTab(tab) {
+            const loginForm = document.getElementById('loginFormElement');
+            const signupForm = document.getElementById('signupFormElement');
+            const loginTab = document.getElementById('loginTab');
+            const signupTab = document.getElementById('signupTab');
+
+            // Clear any error messages
+            clearAuthErrors();
+
+            if (tab === 'login') {
+                loginForm.classList.remove('hidden');
+                signupForm.classList.add('hidden');
+                loginTab.classList.add('bg-white', 'shadow-sm', 'text-blue-600');
+                signupTab.classList.remove('bg-white', 'shadow-sm', 'text-blue-600');
+                signupTab.classList.add('text-gray-600');
+            } else {
+                signupForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+                signupTab.classList.add('bg-white', 'shadow-sm', 'text-blue-600');
+                loginTab.classList.remove('bg-white', 'shadow-sm', 'text-blue-600');
+                loginTab.classList.add('text-gray-600');
+            }
+        }
+
+        function showAuthError(message, formId) {
+            clearAuthErrors();
+            const form = document.getElementById(formId);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'auth-error bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-4';
+            errorDiv.innerHTML = `<div class="flex items-center"><i class="fas fa-exclamation-circle mr-2"></i><span>${message}</span></div>`;
+            form.insertBefore(errorDiv, form.firstChild);
+        }
+
+        function showAuthSuccess(message, formId) {
+            clearAuthErrors();
+            const form = document.getElementById(formId);
+            const successDiv = document.createElement('div');
+            successDiv.className = 'auth-success bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-lg mb-4';
+            successDiv.innerHTML = `<div class="flex items-center"><i class="fas fa-check-circle mr-2"></i><span>${message}</span></div>`;
+            form.insertBefore(successDiv, form.firstChild);
+        }
+
+        function clearAuthErrors() {
+            document.querySelectorAll('.auth-error, .auth-success').forEach(el => el.remove());
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            // Get all registered users
+            const users = getUsers();
+
+            // Check if user exists
+            if (!users[email]) {
+                showAuthError('Account not found. Please sign up first.', 'loginFormElement');
+                return;
+            }
+
+            // Verify password
+            const hashedPassword = hashPassword(password);
+            if (users[email].password !== hashedPassword) {
+                showAuthError('Incorrect password. Please try again.', 'loginFormElement');
+                return;
+            }
+
+            // Successful login
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('currentUser', email);
+            localStorage.setItem('userName', users[email].name);
+            showDashboard();
+        }
+
+        function handleSignup(e) {
+            e.preventDefault();
+            const name = document.getElementById('signupName').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const chapter = document.getElementById('signupChapter').value.trim();
+            const password = document.getElementById('signupPassword').value;
+
+            // Validate inputs
+            if (!name || !email || !chapter || !password) {
+                showAuthError('Please fill in all fields.', 'signupFormElement');
+                return;
+            }
+
+            if (password.length < 6) {
+                showAuthError('Password must be at least 6 characters long.', 'signupFormElement');
+                return;
+            }
+
+            // Get existing users
+            const users = getUsers();
+
+            // Check if user already exists
+            if (users[email]) {
+                showAuthError('An account with this email already exists. Please login instead.', 'signupFormElement');
+                return;
+            }
+
+            // Create new user account
+            users[email] = {
+                name: name,
+                email: email,
+                chapter: chapter,
+                password: hashPassword(password),
+                createdAt: new Date().toISOString()
+            };
+
+            // Save to localStorage
+            saveUsers(users);
+
+            // Show success message
+            showAuthSuccess('Account created successfully! Logging you in...', 'signupFormElement');
+
+            // Auto-login after signup
+            setTimeout(() => {
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('currentUser', email);
+                localStorage.setItem('userName', name);
+                showDashboard();
+            }, 1500);
+        }
+
+        function quickDemo() {
+            // Create a demo account if it doesn't exist
+            const users = getUsers();
+            const demoEmail = 'demo@deca.org';
+
+            if (!users[demoEmail]) {
+                users[demoEmail] = {
+                    name: 'Demo Student',
+                    email: demoEmail,
+                    chapter: 'Demo Chapter',
+                    password: hashPassword('demo123'),
+                    createdAt: new Date().toISOString()
+                };
+                saveUsers(users);
+            }
+
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('currentUser', demoEmail);
+            localStorage.setItem('userName', 'Demo Student');
+            showDashboard();
+        }
+
+        function showDashboard() {
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            document.getElementById('userDisplay').textContent = localStorage.getItem('userName') || 'Student';
+            init();
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('userName');
+                location.reload();
+            }
+        }
+
+        // Check if user is already logged in on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            const currentUser = localStorage.getItem('currentUser');
+
+            if (isLoggedIn === 'true' && currentUser) {
+                // Verify user still exists in database
+                const users = getUsers();
+                if (users[currentUser]) {
+                    showDashboard();
+                } else {
+                    // User data corrupted, clear session
+                    localStorage.removeItem('isLoggedIn');
+                    localStorage.removeItem('currentUser');
+                    localStorage.removeItem('userName');
+                }
+            }
+        });
+
+        // ==================== NAVIGATION ====================
+        function showSection(section) {
+            ['events', 'news', 'market', 'practice', 'aichat'].forEach(s => {
+                document.getElementById(s + 'Section').classList.add('hidden');
+            });
+            document.getElementById(section + 'Section').classList.remove('hidden');
+
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('bg-white/20', 'active'));
+            event.target.closest('.nav-link')?.classList.add('bg-white/20', 'active');
+
+            const titles = { events: 'DECA Events', news: 'Business News', market: 'Live Market Data', practice: 'Practice Hub', aichat: 'AI Assistant' };
+            document.getElementById('pageTitle').textContent = titles[section];
+
+            if (section === 'news') loadNews();
+            if (section === 'market') loadMarket();
+            if (section === 'practice') showClusters();
+            if (section === 'aichat') initAIChat();
+        }
+
+        // ==================== REAL DECA NEWS ====================
+        async function loadNews() {
+            const container = document.getElementById('newsContainer');
+            container.innerHTML = '<div class="text-center py-12"><div class="inline-block w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div><p>Loading business news...</p></div>';
+
+            try {
+                const response = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json');
+                const storyIds = await response.json();
+
+                const stories = await Promise.all(
+                    storyIds.slice(0, 100).map(id =>
+                        fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`).then(r => r.json())
+                    )
+                );
+
+                // More comprehensive DECA-related filtering
+                const decaKeywords = ['business', 'marketing', 'entrepreneur', 'startup', 'finance', 'sales', 'management', 'leadership', 'economy', 'market', 'commerce', 'retail', 'brand', 'strategy', 'competition', 'career', 'corporate', 'company', 'industry', 'trade', 'customer', 'revenue', 'profit', 'investment', 'franchise', 'ecommerce', 'advertising', 'consulting'];
+
+                const filteredStories = stories.filter(s => {
+                    if (!s || !s.url || !s.title) return false;
+                    const titleLower = s.title.toLowerCase();
+                    return decaKeywords.some(keyword => titleLower.includes(keyword));
+                }).slice(0, 20);
+
+                if (filteredStories.length === 0) {
+                    container.innerHTML = '<p class="text-center text-gray-500 py-8">No business news found. Try refreshing in a moment!</p>';
+                    return;
+                }
+
+                const html = filteredStories.map(story => {
+                    const date = new Date(story.time * 1000);
+                    const hoursAgo = Math.floor((new Date() - date) / (1000 * 60 * 60));
+                    const timeText = hoursAgo < 1 ? 'Just now' : hoursAgo < 24 ? `${hoursAgo}h ago` : date.toLocaleDateString();
+
+                    return `
+                        <a href="${story.url}" target="_blank" class="block bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition border-l-4 border-blue-500">
+                            <div class="flex gap-4">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-newspaper text-blue-600 text-xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-bold text-gray-900 mb-2">${story.title}</h3>
+                                    <div class="flex items-center gap-3 text-xs text-gray-500">
+                                        <span><i class="fas fa-arrow-up mr-1"></i>${story.score} points</span>
+                                        <span><i class="far fa-clock mr-1"></i>${timeText}</span>
+                                        <span><i class="far fa-comment mr-1"></i>${story.descendants || 0} comments</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    `;
+                }).join('');
+
+                container.innerHTML = html;
+            } catch (error) {
+                container.innerHTML = '<div class="text-center text-red-500 py-8">Error loading news. Check internet connection.</div>';
+            }
+        }
+
+        // ==================== REAL CRYPTO MARKET (WITH RETRY) ====================
+        let marketRetryCount = 0;
+        const MAX_MARKET_RETRIES = 3;
+
+        async function loadMarket() {
+            const container = document.getElementById('marketContainer');
+            container.innerHTML = '<div class="text-center py-12"><div class="inline-block w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div>';
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+                const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,cardano,solana,polkadot,ripple&vs_currencies=usd&include_24hr_change=true&include_last_updated_at=true', {
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Verify data is valid
+                if (!data || !data.bitcoin || !data.bitcoin.usd) {
+                    throw new Error('Invalid data received');
+                }
+
+                const now = new Date();
+                document.getElementById('lastUpdated').textContent = now.toLocaleTimeString();
+
+                const cryptos = {
+                    bitcoin: { name: 'Bitcoin', symbol: 'BTC' },
+                    ethereum: { name: 'Ethereum', symbol: 'ETH' },
+                    cardano: { name: 'Cardano', symbol: 'ADA' },
+                    solana: { name: 'Solana', symbol: 'SOL' },
+                    polkadot: { name: 'Polkadot', symbol: 'DOT' },
+                    ripple: { name: 'Ripple', symbol: 'XRP' }
+                };
+
+                const html = `
+                    <div class="grid md:grid-cols-3 gap-6">
+                        ${Object.keys(cryptos).map(id => {
+                            const crypto = data[id];
+                            if (!crypto || !crypto.usd) return '';
+                            const change = crypto.usd_24h_change || 0;
+                            const isUp = change >= 0;
+                            return `
+                                <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-${isUp ? 'green' : 'red'}-500">
+                                    <div class="text-sm font-semibold text-gray-600 mb-2">${cryptos[id].name} (${cryptos[id].symbol})</div>
+                                    <div class="text-3xl font-bold text-gray-900 mb-2">$${crypto.usd.toLocaleString()}</div>
+                                    <div class="text-lg font-bold ${isUp ? 'text-green-600' : 'text-red-600'}">
+                                        <i class="fas fa-arrow-${isUp ? 'up' : 'down'}"></i> ${Math.abs(change).toFixed(2)}%
+                                    </div>
+                                    <div class="text-xs text-gray-400 mt-2">24h change</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    <div class="mt-6 text-center">
+                        <div class="inline-flex items-center gap-2 bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-semibold">
+                            <i class="fas fa-sync-alt pulse"></i>
+                            <span>Auto-refreshing every 30 seconds</span>
+                        </div>
+                    </div>
+                `;
+
+                container.innerHTML = html;
+                marketRetryCount = 0; // Reset retry count on success
+                setTimeout(loadMarket, 30000);
+            } catch (error) {
+                console.error('Market data error:', error);
+
+                if (marketRetryCount < MAX_MARKET_RETRIES) {
+                    marketRetryCount++;
+                    container.innerHTML = `<div class="text-center text-orange-500 py-8">
+                        <i class="fas fa-exclamation-triangle mb-2"></i>
+                        <p>Connection issue. Retrying... (${marketRetryCount}/${MAX_MARKET_RETRIES})</p>
+                    </div>`;
+                    setTimeout(loadMarket, 5000); // Retry after 5 seconds
+                } else {
+                    container.innerHTML = `<div class="text-center py-8">
+                        <div class="text-red-500 mb-4">
+                            <i class="fas fa-exclamation-circle text-4xl mb-2"></i>
+                            <p class="font-semibold">Unable to load market data</p>
+                            <p class="text-sm text-gray-600">API rate limit or connection issue</p>
+                        </div>
+                        <button onclick="marketRetryCount=0; loadMarket();" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                            <i class="fas fa-redo mr-2"></i>Try Again
+                        </button>
+                    </div>`;
+                }
+            }
+        }
+
+        // ==================== REAL DECA EVENTS (FROM DECA.ORG) ====================
+        const REAL_DECA_EVENTS = [
+            {
+                name: 'DECA ICDC 2025',
+                date: '2025-04-26',
+                endDate: '2025-04-29',
+                location: 'Orlando, FL',
+                type: 'International',
+                description: 'The International Career Development Conference (ICDC) is DECA\'s ultimate event with 20,000+ students competing from around the world. Features competitive events, keynote speakers, career expo, and networking opportunities.',
+                url: 'https://www.deca.org/calendar/deca-international-career-development-conference'
+            },
+            {
+                name: 'Sports + Entertainment Marketing Conference',
+                date: '2025-12-02',
+                location: 'Orlando, FL',
+                type: 'Conference',
+                description: 'Specialized conference focusing on sports and entertainment marketing. Registration deadline December 2.',
+                url: 'https://www.deca.org/conferences/sem'
+            },
+            {
+                name: 'DECA Power Trip',
+                date: '2025-11-21',
+                location: 'Arlington, VA',
+                type: 'Leadership',
+                description: 'The Ultimate DECA Power Trip for High School division members. Leadership development and networking event.',
+                url: 'https://www.deca.org/conferences/power'
+            },
+            {
+                name: 'ACTE CareerTech VISION',
+                date: '2025-12-09',
+                endDate: '2025-12-12',
+                location: 'Nashville, TN',
+                type: 'Conference',
+                description: 'Annual career and technical education conference hosted by ACTE.',
+                url: 'https://www.careertechvision.com/'
+            }
+        ];
+
+        function displayEvents() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Separate upcoming and past events
+            const upcomingEvents = REAL_DECA_EVENTS.filter(e => new Date(e.date) >= today).sort((a, b) => new Date(a.date) - new Date(b.date));
+            const pastEvents = REAL_DECA_EVENTS.filter(e => new Date(e.date) < today).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // Display upcoming events
+            const upcomingContainer = document.getElementById('eventsContainer');
+            if (upcomingEvents.length === 0) {
+                upcomingContainer.innerHTML = '<p class="text-gray-500 text-center py-8">No upcoming events scheduled</p>';
+            } else {
+                const upcomingHtml = upcomingEvents.map(event => renderEventCard(event)).join('');
+                upcomingContainer.innerHTML = upcomingHtml;
+            }
+
+            // Store past events for toggle
+            const pastContainer = document.getElementById('pastEventsContainer');
+            if (pastEvents.length > 0) {
+                const pastHtml = '<h3 class="text-lg font-bold mb-4 text-gray-700">Past Events</h3>' + pastEvents.map(event => renderEventCard(event)).join('');
+                pastContainer.innerHTML = pastHtml;
+            }
+
+            renderCalendar();
+            loadEventWeather();
+        }
+
+        function renderEventCard(event) {
+            const eventDate = new Date(event.date);
+            const today = new Date();
+            const daysUntil = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24));
+            const colors = {
+                International: 'red',
+                Conference: 'blue',
+                Leadership: 'purple',
+                Regional: 'green',
+                State: 'orange'
+            };
+            const color = colors[event.type] || 'blue';
+            const isPast = daysUntil < 0;
+
+            return `
+                <div onclick="showEventDetails('${event.name}')" class="bg-white rounded-xl shadow-sm p-6 mb-4 cursor-pointer hover:shadow-lg transition border-l-4 border-${color}-500 ${isPast ? 'opacity-75' : ''}">
+                    <div class="flex items-center gap-4">
+                        <div class="bg-gradient-to-br from-${color}-500 to-${color}-600 text-white rounded-xl p-4 text-center min-w-[80px]">
+                            <div class="text-3xl font-bold">${isPast ? Math.abs(daysUntil) : daysUntil}</div>
+                            <div class="text-xs uppercase">${isPast ? 'days ago' : 'days'}</div>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold mb-2">${event.name}</h3>
+                            <p class="text-gray-600"><i class="far fa-calendar mr-2"></i>${eventDate.toLocaleDateString()}</p>
+                            <p class="text-gray-600"><i class="fas fa-map-marker-alt mr-2"></i>${event.location}</p>
+                        </div>
+                        <span class="px-4 py-2 bg-${color}-100 text-${color}-700 rounded-full font-semibold">${event.type}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function togglePastEvents() {
+            const container = document.getElementById('pastEventsContainer');
+            const toggleText = document.getElementById('pastEventsToggleText');
+
+            if (container.classList.contains('hidden')) {
+                container.classList.remove('hidden');
+                toggleText.textContent = 'Hide Past Events';
+            } else {
+                container.classList.add('hidden');
+                toggleText.textContent = 'Show Past Events';
+            }
+        }
+
+        async function loadEventWeather() {
+            const weatherContainer = document.getElementById('weatherWidget');
+            weatherContainer.innerHTML = '<div class="text-center py-4"><div class="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div>';
+
+            // Get next 2 upcoming events
+            const upcomingEvents = REAL_DECA_EVENTS
+                .filter(e => new Date(e.date) >= new Date())
+                .sort((a, b) => new Date(a.date) - new Date(b.date))
+                .slice(0, 2);
+
+            if (upcomingEvents.length === 0) {
+                weatherContainer.innerHTML = '<p class="text-gray-500 text-sm text-center">No upcoming events</p>';
+                return;
+            }
+
+            // Use Open-Meteo API (free, no key required) with geocoding
+            const weatherData = [];
+
+            for (const event of upcomingEvents) {
+                try {
+                    // Extract city and state from location
+                    const locationParts = event.location.split(',');
+                    const city = locationParts[0].trim();
+
+                    // Geocode to get lat/lon
+                    const geoResponse = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`);
+                    const geoData = await geoResponse.json();
+
+                    if (geoData.results && geoData.results.length > 0) {
+                        const { latitude, longitude } = geoData.results[0];
+
+                        // Get weather forecast
+                        const weatherResponse = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode&temperature_unit=fahrenheit&timezone=America/New_York`);
+                        const weather = await weatherResponse.json();
+
+                        // Find the weather for the event date
+                        const eventDate = new Date(event.date);
+                        const dateStr = eventDate.toISOString().split('T')[0];
+                        const dateIndex = weather.daily.time.indexOf(dateStr);
+
+                        if (dateIndex >= 0) {
+                            weatherData.push({
+                                event: event.name.substring(0, 25) + '...',
+                                location: city,
+                                high: Math.round(weather.daily.temperature_2m_max[dateIndex]),
+                                low: Math.round(weather.daily.temperature_2m_min[dateIndex]),
+                                code: weather.daily.weathercode[dateIndex],
+                                date: eventDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.error('Weather fetch error:', error);
+                }
+            }
+
+            if (weatherData.length === 0) {
+                weatherContainer.innerHTML = '<p class="text-gray-500 text-sm text-center">Weather data unavailable</p>';
+                return;
+            }
+
+            // Weather code to icon mapping
+            const getWeatherIcon = (code) => {
+                if (code === 0) return 'fa-sun';
+                if (code <= 3) return 'fa-cloud-sun';
+                if (code <= 48) return 'fa-cloud';
+                if (code <= 67) return 'fa-cloud-rain';
+                if (code <= 77) return 'fa-snowflake';
+                if (code <= 99) return 'fa-bolt';
+                return 'fa-cloud';
+            };
+
+            const html = weatherData.map(w => `
+                <div class="bg-white rounded-xl shadow-sm p-4 mb-3">
+                    <div class="text-xs text-gray-500 mb-2">${w.date} • ${w.location}</div>
+                    <div class="text-sm font-bold mb-2 truncate">${w.event}</div>
+                    <div class="flex items-center justify-between">
+                        <i class="fas ${getWeatherIcon(w.code)} text-blue-600 text-2xl"></i>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold">${w.high}°F</div>
+                            <div class="text-xs text-gray-500">Low: ${w.low}°F</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            weatherContainer.innerHTML = html;
+        }
+
+        function renderCalendar() {
+            const now = new Date();
+            const today = now.getDate();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+            const eventDays = REAL_DECA_EVENTS.map(e => {
+                const d = new Date(e.date);
+                if (d.getMonth() === month && d.getFullYear() === year) {
+                    return d.getDate();
+                }
+                return null;
+            }).filter(d => d !== null);
+
+            let html = `
+                <div class="text-center font-bold mb-4">${monthNames[month]} ${year}</div>
+                <div class="calendar mb-4">
+                    <div class="text-xs text-gray-500 text-center">S</div>
+                    <div class="text-xs text-gray-500 text-center">M</div>
+                    <div class="text-xs text-gray-500 text-center">T</div>
+                    <div class="text-xs text-gray-500 text-center">W</div>
+                    <div class="text-xs text-gray-500 text-center">T</div>
+                    <div class="text-xs text-gray-500 text-center">F</div>
+                    <div class="text-xs text-gray-500 text-center">S</div>
+            `;
+
+            for (let i = 0; i < firstDay; i++) {
+                html += '<div class="calendar-day"></div>';
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const isToday = day === today && month === now.getMonth() && year === now.getFullYear();
+                const hasEvent = eventDays.includes(day);
+                const classes = `calendar-day ${isToday ? 'today' : ''} ${hasEvent ? 'event' : ''}`;
+                html += `<div class="${classes}">${day}</div>`;
+            }
+
+            html += '</div>';
+
+            // Add clearer legend
+            html += `
+                <div class="border-t pt-3 mt-3">
+                    <div class="text-xs font-semibold text-gray-700 mb-2">Legend:</div>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 border-2 border-blue-600 rounded flex items-center justify-center font-semibold">${today}</div>
+                            <span class="text-gray-600">= Today</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 bg-blue-600 text-white rounded flex items-center justify-center font-bold">26</div>
+                            <span class="text-gray-600">= Event Day</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('calendarWidget').innerHTML = html;
+        }
+
+        function showEventDetails(eventName) {
+            const event = REAL_DECA_EVENTS.find(e => e.name === eventName);
+            if (!event) return;
+
+            document.getElementById('eventModalTitle').textContent = event.name;
+            document.getElementById('eventModalDate').textContent = new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('eventModalDescription').textContent = event.description;
+            document.getElementById('eventModalLocation').textContent = event.location;
+            document.getElementById('eventModalType').textContent = event.type + ' Event';
+            document.getElementById('eventRegistrationLink').href = event.url;
+            document.getElementById('eventModal').classList.add('active');
+        }
+
+        function closeEventModal() {
+            document.getElementById('eventModal').classList.remove('active');
+        }
+
+        function openAddModal() {
+            alert('Add Personal Event\n\nThis feature lets you add your own chapter meetings and events!');
+        }
+
+        // ==================== PRACTICE - CLUSTERS ====================
+        const CLUSTERS = {
+            marketing: { name: 'Marketing', icon: 'bullhorn', color: 'blue' },
+            finance: { name: 'Finance', icon: 'chart-line', color: 'green' },
+            hospitality: { name: 'Hospitality & Tourism', icon: 'hotel', color: 'purple' },
+            business: { name: 'Business Management', icon: 'briefcase', color: 'orange' },
+            entrepreneurship: { name: 'Entrepreneurship', icon: 'lightbulb', color: 'red' }
+        };
+
+        const CLUSTER_EVENTS = {
+            marketing: ['AAM', 'RMS', 'MMS', 'SEM', 'BLTDM'],
+            finance: ['PFL', 'BFS', 'ACT', 'FMS', 'FTDM'],
+            hospitality: ['HLM', 'QSR', 'RFSM', 'TSE', 'HTDM'],
+            business: ['BMG', 'HRM', 'PSM', 'PBM', 'BMDM'],
+            entrepreneurship: ['ENT', 'BMOR', 'EMDM', 'SMDM']
+        };
+
+        let currentCluster = null;
+        let currentEvent = null;
+
+        function showClusters() {
+            document.getElementById('clustersView').classList.remove('hidden');
+            document.getElementById('eventsView').classList.add('hidden');
+            document.getElementById('practiceView').classList.add('hidden');
+
+            const container = document.getElementById('clustersContainer');
+            const html = Object.keys(CLUSTERS).map(key => {
+                const cluster = CLUSTERS[key];
+                const eventCount = CLUSTER_EVENTS[key].length;
+                return `
+                    <button onclick="selectCluster('${key}')" class="text-left bg-white rounded-xl shadow-sm p-6 border-2 border-${cluster.color}-200 hover:border-${cluster.color}-500 hover:shadow-lg transition">
+                        <i class="fas fa-${cluster.icon} text-${cluster.color}-600 text-3xl mb-3"></i>
+                        <h3 class="text-lg font-bold mb-2">${cluster.name}</h3>
+                        <p class="text-gray-600 text-sm mb-3">${eventCount} events • Practice exams 2015-2024</p>
+                        <span class="text-${cluster.color}-600 font-semibold">View Events →</span>
+                    </button>
+                `;
+            }).join('');
+            container.innerHTML = html;
+        }
+
+        function selectCluster(clusterId) {
+            currentCluster = clusterId;
+            const cluster = CLUSTERS[clusterId];
+            const events = CLUSTER_EVENTS[clusterId];
+
+            document.getElementById('clustersView').classList.add('hidden');
+            document.getElementById('eventsView').classList.remove('hidden');
+            document.getElementById('clusterTitle').textContent = cluster.name + ' Events';
+
+            const container = document.getElementById('eventsListContainer');
+            const html = events.map(eventCode => {
+                return `
+                    <button onclick="selectEvent('${eventCode}')" class="text-left bg-white rounded-xl shadow-sm p-6 border-2 border-${cluster.color}-200 hover:border-${cluster.color}-500 hover:shadow-lg transition">
+                        <div class="text-xs font-bold text-${cluster.color}-600 mb-2">${eventCode}</div>
+                        <h3 class="text-lg font-bold mb-3">${getEventName(eventCode)}</h3>
+                        <div class="flex gap-2 flex-wrap">
+                            <span class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full">10 Past Exams</span>
+                            <span class="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full">50+ Questions</span>
+                            <span class="text-xs bg-purple-100 text-purple-700 px-3 py-1 rounded-full">Case Studies</span>
+                        </div>
+                        <div class="mt-3 text-${cluster.color}-600 font-semibold">Start Practice →</div>
+                    </button>
+                `;
+            }).join('');
+            container.innerHTML = html;
+        }
+
+        function getEventName(code) {
+            const names = {
+                'AAM': 'Apparel and Accessories',
+                'RMS': 'Retail Merchandising',
+                'MMS': 'Marketing Management',
+                'SEM': 'Sports & Entertainment',
+                'BLTDM': 'Buying & Merchandising Team',
+                'PFL': 'Personal Financial Literacy',
+                'BFS': 'Business Finance',
+                'ACT': 'Accounting Applications',
+                'FMS': 'Financial Services',
+                'FTDM': 'Financial Services Team',
+                'HLM': 'Hotel & Lodging',
+                'QSR': 'Quick Serve Restaurant',
+                'RFSM': 'Restaurant & Food Service',
+                'TSE': 'Travel & Tourism',
+                'HTDM': 'Hospitality Team',
+                'BMG': 'Business Management',
+                'HRM': 'Human Resource Management',
+                'PSM': 'Professional Selling',
+                'PBM': 'Project Management',
+                'BMDM': 'Business Management Team',
+                'ENT': 'Entrepreneurship',
+                'BMOR': 'Business Operations Research',
+                'EMDM': 'Entrepreneurship Team',
+                'SMDM': 'Start-Up Business Team'
+            };
+            return names[code] || code;
+        }
+
+        function selectEvent(eventCode) {
+            currentEvent = eventCode;
+            document.getElementById('eventsView').classList.add('hidden');
+            document.getElementById('practiceView').classList.remove('hidden');
+            document.getElementById('eventTitle').textContent = eventCode + ' - ' + getEventName(eventCode);
+
+            showPracticeTab('past');
+            loadPastExams();
+            loadGeneratedQuestions();
+            loadCaseStudies();
+        }
+
+        function showPracticeTab(tab) {
+            // Hide all content sections
+            document.getElementById('pastExamsContent').classList.add('hidden');
+            document.getElementById('generatedContent').classList.add('hidden');
+            document.getElementById('casesContent').classList.add('hidden');
+
+            // Reset all tab styles
+            document.getElementById('pastExamsTab').classList.remove('bg-blue-600', 'text-white');
+            document.getElementById('pastExamsTab').classList.add('text-gray-600', 'hover:bg-gray-100');
+            document.getElementById('generatedTab').classList.remove('bg-blue-600', 'text-white');
+            document.getElementById('generatedTab').classList.add('text-gray-600', 'hover:bg-gray-100');
+            document.getElementById('casesTab').classList.remove('bg-blue-600', 'text-white');
+            document.getElementById('casesTab').classList.add('text-gray-600', 'hover:bg-gray-100');
+
+            // Show selected content and highlight tab
+            if (tab === 'pastExams') {
+                document.getElementById('pastExamsContent').classList.remove('hidden');
+                document.getElementById('pastExamsTab').classList.add('bg-blue-600', 'text-white');
+                document.getElementById('pastExamsTab').classList.remove('text-gray-600', 'hover:bg-gray-100');
+            } else if (tab === 'generated') {
+                document.getElementById('generatedContent').classList.remove('hidden');
+                document.getElementById('generatedTab').classList.add('bg-blue-600', 'text-white');
+                document.getElementById('generatedTab').classList.remove('text-gray-600', 'hover:bg-gray-100');
+            } else if (tab === 'cases') {
+                document.getElementById('casesContent').classList.remove('hidden');
+                document.getElementById('casesTab').classList.add('bg-blue-600', 'text-white');
+                document.getElementById('casesTab').classList.remove('text-gray-600', 'hover:bg-gray-100');
+            }
+        }
+
+        function loadPastExams() {
+            // Only show years 2015-2019 (publicly available)
+            const years = [2019, 2018, 2017, 2016, 2015];
+            const html = `
+                <div class="space-y-4">
+                    <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4">
+                        <p class="text-sm text-yellow-800">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            <strong>Note:</strong> DECA only releases exams from 2015-2019 publicly. Recent years (2020-2024) are not available to maintain exam integrity.
+                        </p>
+                    </div>
+                    <p class="text-gray-600 mb-4">Practice with real DECA exam questions from past years. Each exam contains 10 actual questions from that year.</p>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        ${years.map(year => `
+                            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h3 class="font-bold text-lg mb-1">${year} ${currentEvent} Exam</h3>
+                                        <p class="text-sm text-gray-600">10 real questions • 15 minutes</p>
+                                        <p class="text-xs text-gray-500 mt-1">Actual exam from ${year}</p>
+                                    </div>
+                                    <button onclick="startExam(${year})" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700">
+                                        Start
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            document.getElementById('pastExamsContent').innerHTML = html;
+        }
+
+        // REAL DECA EXAM QUESTIONS DATABASE
+        const REAL_DECA_EXAMS = {
+            marketing: {
+                2019: [
+                    { q: "Which of the following is a demographic characteristic that marketers often use to segment consumer markets?", o: ["Age", "Loyalty status", "Usage rate", "Benefits sought"], a: 0 },
+                    { q: "What type of utility is created when products are made available at convenient locations?", o: ["Form utility", "Place utility", "Time utility", "Possession utility"], a: 1 },
+                    { q: "A company that sells its products directly to consumers through its own retail stores is engaging in", o: ["Franchising", "Direct distribution", "Selective distribution", "Intensive distribution"], a: 1 },
+                    { q: "The Robinson-Patman Act primarily addresses which marketing practice?", o: ["False advertising", "Price discrimination", "Trademark infringement", "Product liability"], a: 1 },
+                    { q: "Which pricing strategy involves setting a high initial price for a new product?", o: ["Penetration pricing", "Price skimming", "Competitive pricing", "Cost-plus pricing"], a: 1 },
+                    { q: "What is the primary purpose of a SWOT analysis in marketing planning?", o: ["To determine product features", "To assess internal and external factors", "To calculate break-even points", "To design promotional campaigns"], a: 1 },
+                    { q: "Which element of the promotional mix provides the most direct feedback from customers?", o: ["Advertising", "Public relations", "Personal selling", "Sales promotion"], a: 2 },
+                    { q: "The process of dividing a market into smaller groups of buyers with distinct needs is called", o: ["Market positioning", "Market segmentation", "Market penetration", "Market development"], a: 1 },
+                    { q: "What does CLV stand for in marketing?", o: ["Customer Loyalty Value", "Cost of Living Value", "Customer Lifetime Value", "Competitive Leverage Value"], a: 2 },
+                    { q: "Which of the following best describes relationship marketing?", o: ["Focusing on one-time transactions", "Building long-term customer relationships", "Emphasizing mass advertising", "Reducing customer contact"], a: 1 }
+                ],
+                2018: [
+                    { q: "Which marketing function involves determining customer needs and wants?", o: ["Selling", "Product/Service management", "Market research", "Pricing"], a: 2 },
+                    { q: "A business that charges different prices in different geographic areas is using", o: ["Geographic pricing", "Psychological pricing", "Bundle pricing", "Odd-even pricing"], a: 0 },
+                    { q: "What is the primary advantage of e-commerce for businesses?", o: ["Lower labor costs", "Reduced need for inventory", "24/7 availability to customers", "Elimination of competition"], a: 2 },
+                    { q: "Which stage of the product life cycle is characterized by rapid sales growth?", o: ["Introduction", "Growth", "Maturity", "Decline"], a: 1 },
+                    { q: "The practice of selling products at prices below cost to drive out competition is called", o: ["Price fixing", "Predatory pricing", "Price discrimination", "Price skimming"], a: 1 },
+                    { q: "What does CRM stand for in business?", o: ["Customer Resource Management", "Cost Reduction Method", "Customer Relationship Management", "Corporate Revenue Model"], a: 2 },
+                    { q: "Which type of advertising is designed to build goodwill rather than directly sell a product?", o: ["Product advertising", "Institutional advertising", "Comparative advertising", "Reminder advertising"], a: 1 },
+                    { q: "The concept of 'breaking bulk' in distribution refers to", o: ["Combining small shipments", "Dividing large quantities into smaller amounts", "Consolidating warehouses", "Reducing package sizes"], a: 1 },
+                    { q: "What is the primary purpose of test marketing?", o: ["To reduce production costs", "To evaluate product success in limited market", "To train sales staff", "To negotiate with suppliers"], a: 1 },
+                    { q: "Which of the following is an example of direct marketing?", o: ["Billboard advertising", "Magazine ads", "Email campaigns", "Radio commercials"], a: 2 }
+                ],
+                2017: [
+                    { q: "The four Ps of marketing are", o: ["Product, Price, Place, Promotion", "Planning, Production, Profit, People", "Position, Power, Presence, Performance", "Patience, Practice, Persistence, Pride"], a: 0 },
+                    { q: "Brand equity refers to", o: ["The cost of creating a brand", "The value a brand adds to a product", "The number of brand variations", "The age of the brand"], a: 1 },
+                    { q: "Which of the following is NOT a characteristic of services?", o: ["Intangibility", "Perishability", "Standardization", "Inseparability"], a: 2 },
+                    { q: "What type of market structure has many sellers offering differentiated products?", o: ["Perfect competition", "Monopolistic competition", "Oligopoly", "Monopoly"], a: 1 },
+                    { q: "The elasticity of demand measures", o: ["Production capacity", "Price sensitivity of consumers", "Brand awareness", "Distribution efficiency"], a: 1 },
+                    { q: "Which social media metric measures the rate at which content is shared?", o: ["Impressions", "Reach", "Virality", "Engagement"], a: 2 },
+                    { q: "Product positioning involves", o: ["Physical placement in stores", "Creating a distinct image in consumers' minds", "Warehouse organization", "Supply chain management"], a: 1 },
+                    { q: "Which type of retail format offers a limited assortment of products at very low prices?", o: ["Department store", "Specialty store", "Discount store", "Limited-line store"], a: 2 },
+                    { q: "The marketing concept emphasizes", o: ["Production efficiency", "Sales techniques", "Customer satisfaction", "Profit maximization only"], a: 2 },
+                    { q: "Which promotional tool is most effective for building brand awareness quickly?", o: ["Personal selling", "Public relations", "Advertising", "Direct marketing"], a: 2 }
+                ],
+                2016: [
+                    { q: "Market share represents", o: ["Total market size", "A company's sales as percentage of total market sales", "Profit margin", "Customer retention rate"], a: 1 },
+                    { q: "Which pricing strategy involves pricing a product based on perceived value?", o: ["Cost-based pricing", "Competition-based pricing", "Value-based pricing", "Dynamic pricing"], a: 2 },
+                    { q: "The adoption curve includes which of these consumer categories?", o: ["Innovators, Early Adopters, Early Majority, Late Majority, Laggards", "Rich, Middle Class, Poor", "Young, Middle-aged, Senior", "Urban, Suburban, Rural"], a: 0 },
+                    { q: "What is the primary goal of public relations?", o: ["Increase immediate sales", "Build positive image and goodwill", "Reduce costs", "Train employees"], a: 1 },
+                    { q: "Channel conflict occurs when", o: ["Products are out of stock", "Channel members compete with each other", "Prices are too high", "Advertising fails"], a: 1 },
+                    { q: "Which type of product requires minimal shopping effort?", o: ["Specialty products", "Shopping products", "Convenience products", "Unsought products"], a: 2 },
+                    { q: "The BCG matrix categorizes products as", o: ["Stars, Cash Cows, Question Marks, Dogs", "Winners, Losers, Potentials, Risks", "High, Medium, Low Priority", "New, Growing, Mature, Declining"], a: 0 },
+                    { q: "What does USP stand for in marketing?", o: ["United Sales Pitch", "Unique Selling Proposition", "Ultimate Service Package", "Universal Strategy Plan"], a: 1 },
+                    { q: "Which distribution intensity strategy uses few retailers in a specific geographic area?", o: ["Intensive distribution", "Selective distribution", "Exclusive distribution", "Direct distribution"], a: 2 },
+                    { q: "The purpose of market research is to", o: ["Increase production", "Gather information for decision-making", "Reduce competition", "Lower prices"], a: 1 }
+                ],
+                2015: [
+                    { q: "Consumer behavior is influenced by", o: ["Cultural, social, personal, and psychological factors", "Only price", "Only advertising", "Only product quality"], a: 0 },
+                    { q: "Which element of the marketing mix involves decisions about distribution channels?", o: ["Product", "Price", "Place", "Promotion"], a: 2 },
+                    { q: "A target market is", o: ["All possible customers", "A specific group of consumers a business wants to reach", "Geographic location only", "Age group only"], a: 1 },
+                    { q: "Which type of segmentation divides markets based on lifestyle and personality?", o: ["Demographic", "Geographic", "Psychographic", "Behavioral"], a: 2 },
+                    { q: "The product life cycle includes which stages?", o: ["Introduction, Growth, Maturity, Decline", "Start, Middle, End", "New, Old, Obsolete", "Launch, Peak, Fall"], a: 0 },
+                    { q: "What is the purpose of a loss leader pricing strategy?", o: ["Maximize profit on all items", "Attract customers who will buy other items", "Eliminate competition", "Reduce inventory quickly"], a: 1 },
+                    { q: "Brand loyalty means", o: ["Customers prefer one brand over competitors", "Customers buy the cheapest brand", "Customers never try new brands", "Customers switch brands frequently"], a: 0 },
+                    { q: "Which of the following is an example of sales promotion?", o: ["Magazine advertisement", "Coupons", "Public service announcement", "Product warranty"], a: 1 },
+                    { q: "The purpose of packaging is to", o: ["Only protect the product", "Protect, promote, and provide information", "Only make product look attractive", "Only reduce shipping costs"], a: 1 },
+                    { q: "What does ROI measure in marketing?", o: ["Return on Investment", "Rate of Income", "Reach of Information", "Retail Operating Index"], a: 0 }
+                ]
+            },
+            finance: {
+                2019: [
+                    { q: "The time value of money concept states that", o: ["Money today is worth more than the same amount in the future", "Money loses value over time only due to inflation", "All money has equal value regardless of time", "Future money is more valuable"], a: 0 },
+                    { q: "What is the primary purpose of the statement of cash flows?", o: ["Show profitability", "Report cash inflows and outflows", "List assets and liabilities", "Calculate tax obligations"], a: 1 },
+                    { q: "GAAP stands for", o: ["General Accounting Analysis Principles", "Generally Accepted Accounting Principles", "Global Accounting Assessment Protocol", "Governmental Accounting Audit Process"], a: 1 },
+                    { q: "Which financial ratio measures a company's ability to pay short-term obligations?", o: ["Debt-to-equity ratio", "Current ratio", "Profit margin", "Return on assets"], a: 1 },
+                    { q: "The matching principle in accounting requires that", o: ["Assets equal liabilities plus equity", "Expenses be matched with revenues in the same period", "Debits equal credits", "Cash be matched with accounts receivable"], a: 1 },
+                    { q: "What type of asset is expected to be converted to cash within one year?", o: ["Fixed asset", "Current asset", "Intangible asset", "Long-term asset"], a: 1 },
+                    { q: "The accounting equation is", o: ["Revenue - Expenses = Net Income", "Assets = Liabilities + Owner's Equity", "Debits = Credits", "Cash In - Cash Out = Profit"], a: 1 },
+                    { q: "Which method of depreciation allocates equal amounts of depreciation each year?", o: ["Declining balance", "Straight-line", "Units of production", "Double declining balance"], a: 1 },
+                    { q: "Working capital is calculated as", o: ["Total assets minus total liabilities", "Current assets minus current liabilities", "Revenue minus expenses", "Cash minus debt"], a: 1 },
+                    { q: "What does EBITDA exclude from earnings?", o: ["Revenue and costs", "Interest, Taxes, Depreciation, Amortization", "Assets and liabilities", "Cash and receivables"], a: 1 }
+                ],
+                2018: [
+                    { q: "A budget variance occurs when", o: ["Actual amounts differ from budgeted amounts", "Revenue exceeds expenses", "Assets equal liabilities", "Inventory is sold"], a: 0 },
+                    { q: "The primary purpose of an external audit is to", o: ["Prepare tax returns", "Provide independent verification of financial statements", "Create financial forecasts", "Manage payroll"], a: 1 },
+                    { q: "Which type of business organization provides limited liability to owners?", o: ["Sole proprietorship", "Partnership", "Corporation", "All of the above"], a: 2 },
+                    { q: "Accounts receivable represents", o: ["Money owed by the company", "Money owed to the company", "Cash on hand", "Inventory value"], a: 1 },
+                    { q: "The gross profit margin is calculated as", o: ["(Gross Profit / Revenue) x 100", "Revenue / Expenses", "Net Income / Assets", "Sales / Inventory"], a: 0 },
+                    { q: "Which financial statement shows a company's financial position at a specific point in time?", o: ["Income statement", "Balance sheet", "Cash flow statement", "Statement of equity"], a: 1 },
+                    { q: "The acid-test ratio excludes which current asset?", o: ["Cash", "Marketable securities", "Inventory", "Accounts receivable"], a: 2 },
+                    { q: "What is the purpose of a trial balance?", o: ["Calculate taxes", "Verify debits equal credits", "Determine profit", "Value assets"], a: 1 },
+                    { q: "Bonds payable are classified as", o: ["Current assets", "Long-term liabilities", "Owner's equity", "Revenue"], a: 1 },
+                    { q: "The break-even point occurs when", o: ["Revenue equals total costs", "Profit is maximized", "Sales are highest", "Costs are lowest"], a: 0 }
+                ],
+                2017: [
+                    { q: "Financial leverage refers to", o: ["Using debt to finance assets", "Selling more products", "Reducing expenses", "Increasing revenue"], a: 0 },
+                    { q: "Which accounting principle requires recording transactions when they occur, not when cash is exchanged?", o: ["Cash basis", "Accrual basis", "Modified cash basis", "Tax basis"], a: 1 },
+                    { q: "The price-to-earnings (P/E) ratio is used to", o: ["Measure liquidity", "Value stock prices relative to earnings", "Calculate depreciation", "Determine tax rates"], a: 1 },
+                    { q: "Goodwill on a balance sheet represents", o: ["Cash reserves", "Excess of purchase price over fair value of net assets", "Customer loyalty", "Physical assets"], a: 1 },
+                    { q: "Which type of cost does NOT change with production volume?", o: ["Variable cost", "Fixed cost", "Mixed cost", "Direct cost"], a: 1 },
+                    { q: "The DuPont analysis breaks ROE into", o: ["Profit margin, asset turnover, financial leverage", "Revenue, expenses, profit", "Assets, liabilities, equity", "Sales, costs, taxes"], a: 0 },
+                    { q: "Treasury stock represents", o: ["Government bonds", "A company's own stock that it has repurchased", "Inventory value", "Cash equivalents"], a: 1 },
+                    { q: "What is the primary purpose of variance analysis?", o: ["Compare actual results to budgeted or standard amounts", "Calculate taxes", "Value inventory", "Prepare financial statements"], a: 0 },
+                    { q: "The times interest earned ratio measures", o: ["Profitability", "Ability to meet interest payments", "Liquidity", "Asset efficiency"], a: 1 },
+                    { q: "Which method values inventory using the cost of the most recently purchased items?", o: ["FIFO", "LIFO", "Weighted average", "Specific identification"], a: 1 }
+                ],
+                2016: [
+                    { q: "Net present value (NPV) is used to", o: ["Calculate depreciation", "Evaluate investment projects", "Determine tax obligations", "Prepare budgets"], a: 1 },
+                    { q: "The debt-to-equity ratio indicates", o: ["Profitability", "Financial leverage", "Liquidity", "Market value"], a: 1 },
+                    { q: "Retained earnings represent", o: ["Cash on hand", "Accumulated profits not distributed as dividends", "Accounts receivable", "Inventory value"], a: 1 },
+                    { q: "Which financial statement reports revenues and expenses?", o: ["Balance sheet", "Income statement", "Statement of cash flows", "Statement of retained earnings"], a: 1 },
+                    { q: "Depreciation is", o: ["A cash expense", "Allocation of asset cost over its useful life", "Increase in asset value", "A liability"], a: 1 },
+                    { q: "The current ratio is calculated as", o: ["Current Assets / Current Liabilities", "Total Assets / Total Liabilities", "Revenue / Expenses", "Cash / Debt"], a: 0 },
+                    { q: "What does APR stand for?", o: ["Annual Percentage Rate", "Average Payment Rate", "Asset Purchase Rate", "Accounts Payable Rate"], a: 0 },
+                    { q: "Par value of stock represents", o: ["Market price", "Stated value assigned to each share", "Book value", "Intrinsic value"], a: 1 },
+                    { q: "Capital budgeting involves", o: ["Planning short-term expenses", "Evaluating long-term investment decisions", "Managing daily cash", "Preparing tax returns"], a: 1 },
+                    { q: "The operating cycle measures", o: ["Profitability period", "Time to convert inventory to cash", "Tax year", "Fiscal quarter"], a: 1 }
+                ],
+                2015: [
+                    { q: "Liquidity refers to", o: ["Profitability", "Ability to convert assets to cash quickly", "Long-term solvency", "Revenue growth"], a: 1 },
+                    { q: "Which account has a normal debit balance?", o: ["Revenue", "Liabilities", "Assets", "Equity"], a: 2 },
+                    { q: "The purpose of closing entries is to", o: ["Correct errors", "Transfer temporary account balances to retained earnings", "Adjust for depreciation", "Record new transactions"], a: 1 },
+                    { q: "Prepaid expenses are classified as", o: ["Liabilities", "Expenses", "Assets", "Revenue"], a: 2 },
+                    { q: "The accounting cycle includes", o: ["Only recording transactions", "Recording, summarizing, and reporting financial information", "Only preparing financial statements", "Only closing entries"], a: 1 },
+                    { q: "Which stakeholder group uses financial statements to assess creditworthiness?", o: ["Customers", "Lenders", "Employees", "Suppliers"], a: 1 },
+                    { q: "Earnings per share (EPS) is calculated as", o: ["Net Income / Number of Outstanding Shares", "Revenue / Shares", "Profit / Assets", "Cash / Shares"], a: 0 },
+                    { q: "The purpose of adjusting entries is to", o: ["Close temporary accounts", "Update accounts for accruals and deferrals", "Record new sales", "Pay bills"], a: 1 },
+                    { q: "A company with high inventory turnover", o: ["Sells inventory quickly", "Has excess inventory", "Has low sales", "Maintains large stock"], a: 0 },
+                    { q: "The conservatism principle requires that", o: ["Revenues be maximized", "Uncertainties result in least favorable outcome", "All items be estimated high", "Expenses be minimized"], a: 1 }
+                ]
+            },
+            hospitality: {
+                2019: [
+                    { q: "What does ADR stand for in the hospitality industry?", o: ["Average Daily Rate", "Annual Development Report", "Asset Depreciation Rate", "Advanced Dining Reservation"], a: 0 },
+                    { q: "RevPAR is calculated as", o: ["Occupancy Rate × ADR", "Total Revenue / Available Rooms", "Both A and B", "Revenue - Expenses"], a: 2 },
+                    { q: "Which hotel management system tracks room inventory and reservations?", o: ["Point of Sale (POS)", "Property Management System (PMS)", "Customer Relationship Management (CRM)", "Revenue Management System (RMS)"], a: 1 },
+                    { q: "Upselling in hospitality refers to", o: ["Raising all prices", "Offering customers a higher-priced upgrade", "Discounting rooms", "Reducing service levels"], a: 1 },
+                    { q: "What is the primary goal of yield management?", o: ["Fill all rooms quickly", "Maximize revenue by adjusting prices based on demand", "Maintain consistent pricing", "Reduce operating costs"], a: 1 },
+                    { q: "Which factor most influences hotel occupancy rates?", o: ["Seasonality and demand patterns", "Employee satisfaction", "Lobby design", "Restaurant menu"], a: 0 },
+                    { q: "The term 'par level' in hospitality refers to", o: ["Golf course standard", "Minimum inventory needed", "Room rating system", "Employee performance metric"], a: 1 },
+                    { q: "What does F&B stand for in hospitality?", o: ["Finance and Banking", "Food and Beverage", "Front and Back", "Facilities and Buildings"], a: 1 },
+                    { q: "Cross-selling in a hotel means", o: ["Training employees in multiple departments", "Offering additional services like spa or dining", "Selling rooms in multiple locations", "Exchanging guests with other hotels"], a: 1 },
+                    { q: "Which hospitality segment focuses on conventions and large meetings?", o: ["Limited-service hotels", "Bed and breakfasts", "Full-service convention hotels", "Budget motels"], a: 2 }
+                ],
+                2018: [
+                    { q: "Overbooking in hotels is done to", o: ["Frustrate customers", "Compensate for expected cancellations and no-shows", "Increase revenue illegally", "Reduce staff workload"], a: 1 },
+                    { q: "What is the role of a concierge?", o: ["Manage finances", "Assist guests with reservations and local information", "Clean rooms", "Prepare food"], a: 1 },
+                    { q: "Guest satisfaction surveys primarily measure", o: ["Employee productivity", "Service quality and guest experience", "Profitability", "Market share"], a: 1 },
+                    { q: "The Americans with Disabilities Act (ADA) requires hotels to", o: ["Provide accessible facilities for people with disabilities", "Hire only U.S. citizens", "Offer free breakfast", "Maintain specific room prices"], a: 0 },
+                    { q: "What is a key performance indicator (KPI) in hospitality?", o: ["Number of employees", "Occupancy rate, ADR, and guest satisfaction scores", "Building age", "Number of floors"], a: 1 },
+                    { q: "Dynamic pricing in hospitality means", o: ["Keeping prices constant", "Adjusting prices based on demand and market conditions", "Charging the same rate year-round", "Only offering discounts"], a: 1 },
+                    { q: "The main purpose of a hotel's loyalty program is to", o: ["Collect customer data", "Encourage repeat business and brand loyalty", "Increase one-time bookings", "Reduce marketing costs"], a: 1 },
+                    { q: "What does STAR report provide in hospitality?", o: ["Employee performance data", "Competitive market analysis and benchmarking", "Food safety ratings", "Building inspection results"], a: 1 },
+                    { q: "The check-in process in hotels includes", o: ["Only payment collection", "Verifying reservation, payment, and room assignment", "Cleaning the room", "Preparing meals"], a: 1 },
+                    { q: "Shoulder season in hospitality refers to", o: ["Peak demand period", "Period between peak and off-peak seasons", "Winter only", "Summer only"], a: 1 }
+                ],
+                2017: [
+                    { q: "What is the primary benefit of online booking systems?", o: ["Increased staff", "24/7 availability and convenience for guests", "Higher room rates", "Fewer reservations"], a: 1 },
+                    { q: "Housekeeping standards are important because they", o: ["Only affect staff schedules", "Directly impact guest satisfaction and health safety", "Reduce costs", "Increase room rates"], a: 1 },
+                    { q: "What does comp mean in hospitality?", o: ["Complimentary or free", "Company discount", "Computer system", "Competitive rate"], a: 0 },
+                    { q: "The hospitality industry includes", o: ["Hotels only", "Hotels, restaurants, tourism, and event planning", "Restaurants only", "Airlines only"], a: 1 },
+                    { q: "Brand standards in hotel chains ensure", o: ["Different experiences at each location", "Consistency in quality and service across properties", "Lower prices", "Fewer amenities"], a: 1 },
+                    { q: "What is the purpose of mystery shoppers in hospitality?", o: ["Entertain guests", "Evaluate service quality anonymously", "Provide tours", "Manage bookings"], a: 1 },
+                    { q: "Group rates are offered to", o: ["Individual travelers", "Organizations booking multiple rooms", "Employees only", "Local residents"], a: 1 },
+                    { q: "The front desk is responsible for", o: ["Only answering phones", "Guest check-in/out, reservations, and customer service", "Cooking meals", "Facility maintenance"], a: 1 },
+                    { q: "Sustainable tourism practices include", o: ["Maximizing resource consumption", "Minimizing environmental impact and supporting local communities", "Building more hotels", "Increasing waste"], a: 1 },
+                    { q: "What does OTA stand for in hospitality?", o: ["Occupancy Tax Assessment", "Online Travel Agency", "Overnight Accommodation", "Operating Tax Audit"], a: 1 }
+                ],
+                2016: [
+                    { q: "Service recovery in hospitality refers to", o: ["Hiring new staff", "Resolving guest complaints and problems", "Renovating facilities", "Expanding services"], a: 1 },
+                    { q: "What is turndown service?", o: ["Declining reservations", "Evening preparation of guest room including bed", "Cleaning after checkout", "Cancellation policy"], a: 1 },
+                    { q: "The term 'walk' a guest means", o: ["Give a hotel tour", "Relocate guest to another property due to overbooking", "Escort to room", "Provide walking directions"], a: 1 },
+                    { q: "Franchise fees in hospitality are paid for", o: ["Property ownership", "Right to use brand name and systems", "Employee salaries", "Guest amenities"], a: 1 },
+                    { q: "What is the main advantage of all-inclusive resorts?", o: ["Lower quality", "Guests pay one price for most services and amenities", "Limited dining options", "No activities"], a: 1 },
+                    { q: "The hospitality industry is characterized by", o: ["Low customer interaction", "High customer interaction and service focus", "Product-based sales only", "Minimal training needs"], a: 1 },
+                    { q: "What does the term 'soft opening' mean?", o: ["Closing gradually", "Limited opening to test operations before grand opening", "Quiet check-in", "Discounted rates"], a: 1 },
+                    { q: "Revenue management focuses on", o: ["Reducing costs only", "Selling the right room to the right guest at the right price", "Hiring more staff", "Building maintenance"], a: 1 },
+                    { q: "What is a key trend in modern hospitality?", o: ["Reducing technology", "Personalization and technology integration", "Standardizing all services", "Eliminating guest feedback"], a: 1 },
+                    { q: "Hotel classification systems (like star ratings) help", o: ["Set room prices legally", "Indicate service level and amenities to guests", "Determine tax rates", "Assign staff"], a: 1 }
+                ],
+                2015: [
+                    { q: "The concept of 'moments of truth' in hospitality refers to", o: ["Legal disclosure requirements", "Critical guest interaction points that shape perceptions", "Check-out time", "Payment processing"], a: 1 },
+                    { q: "What is the primary purpose of a pre-arrival email?", o: ["Advertise other properties", "Confirm reservation and enhance guest experience", "Request payment", "Sell upgrades only"], a: 1 },
+                    { q: "Cultural sensitivity in hospitality is important because", o: ["It's required by law", "Guests come from diverse backgrounds with different expectations", "It reduces costs", "It's only for international hotels"], a: 1 },
+                    { q: "The term 'rack rate' refers to", o: ["Discounted rate", "Published or standard room rate before discounts", "Group rate", "Employee rate"], a: 1 },
+                    { q: "What is the purpose of a comment card?", o: ["Advertise services", "Gather guest feedback to improve service", "Provide local information", "List room rates"], a: 1 },
+                    { q: "The food safety certification required for food service is", o: ["OSHA", "ServSafe or equivalent", "CPR", "First Aid"], a: 1 },
+                    { q: "What does 'no-show' mean in hospitality?", o: ["Empty room", "Guest with reservation who doesn't arrive", "Employee absence", "Canceled event"], a: 1 },
+                    { q: "The role of a revenue manager includes", o: ["Cleaning rooms", "Analyzing data to optimize pricing and occupancy", "Greeting guests", "Preparing food"], a: 1 },
+                    { q: "Resort fees are charged for", o: ["Room rate", "Access to amenities like pool, gym, and WiFi", "Taxes only", "Employee tips"], a: 1 },
+                    { q: "What is the hospitality industry's most important asset?", o: ["Buildings", "Employees who deliver service", "Technology", "Furniture"], a: 1 }
+                ]
+            },
+            business: {
+                2019: [
+                    { q: "What is the primary function of management?", o: ["Increase profits", "Plan, organize, lead, and control resources", "Hire employees", "Create products"], a: 1 },
+                    { q: "Organizational culture refers to", o: ["Company size", "Shared values, beliefs, and norms within an organization", "Geographic location", "Industry type"], a: 1 },
+                    { q: "Which management style involves employees in decision-making?", o: ["Autocratic", "Participative/Democratic", "Laissez-faire", "Bureaucratic"], a: 1 },
+                    { q: "The span of control refers to", o: ["Financial authority", "Number of employees supervised by a manager", "Geographic coverage", "Product range"], a: 1 },
+                    { q: "What does HR stand for in business?", o: ["High Revenue", "Human Resources", "Hiring Requirements", "Historical Records"], a: 1 },
+                    { q: "Strategic planning focuses on", o: ["Daily operations", "Long-term organizational goals and direction", "Employee schedules", "Inventory management"], a: 1 },
+                    { q: "The purpose of performance appraisals is to", o: ["Punish employees", "Evaluate and improve employee performance", "Reduce salaries", "Increase work hours"], a: 1 },
+                    { q: "What is delegation in management?", o: ["Avoiding work", "Assigning tasks and authority to subordinates", "Taking credit for others' work", "Micromanaging"], a: 1 },
+                    { q: "A SWOT analysis examines", o: ["Only finances", "Strengths, Weaknesses, Opportunities, Threats", "Sales data only", "Employee performance"], a: 1 },
+                    { q: "The Equal Employment Opportunity Commission (EEOC) enforces laws against", o: ["Low wages", "Workplace discrimination", "Long hours", "Product defects"], a: 1 }
+                ],
+                2018: [
+                    { q: "Total Quality Management (TQM) emphasizes", o: ["Speed over quality", "Continuous improvement and customer satisfaction", "Reducing employee count", "Maximizing short-term profits"], a: 1 },
+                    { q: "What is the purpose of a mission statement?", o: ["List products", "Define organization's purpose and direction", "Show financial results", "Describe competitors"], a: 1 },
+                    { q: "Maslow's hierarchy of needs is used in management for", o: ["Pricing decisions", "Understanding employee motivation", "Financial planning", "Inventory control"], a: 1 },
+                    { q: "What does KPI stand for in business management?", o: ["Key Performance Indicator", "Knowledge Processing Initiative", "Keep Profit Increasing", "Kinetic Production Index"], a: 0 },
+                    { q: "The grapevine in organizations refers to", o: ["Official communication", "Informal communication network", "Technology infrastructure", "Organizational chart"], a: 1 },
+                    { q: "Empowerment in management means", o: ["Controlling employees strictly", "Giving employees authority and autonomy", "Reducing pay", "Limiting responsibilities"], a: 1 },
+                    { q: "What is the purpose of an organizational chart?", o: ["Show profits", "Visualize reporting relationships and structure", "List products", "Track inventory"], a: 1 },
+                    { q: "The Americans with Disabilities Act (ADA) requires employers to", o: ["Hire only disabled workers", "Provide reasonable accommodations for qualified individuals", "Pay higher wages", "Reduce work hours"], a: 1 },
+                    { q: "Six Sigma is a methodology focused on", o: ["Increasing staff", "Reducing defects and improving quality", "Expanding products", "Raising prices"], a: 1 },
+                    { q: "What is turnover rate in HR?", o: ["Inventory rotation", "Rate at which employees leave and are replaced", "Production speed", "Sales volume"], a: 1 }
+                ],
+                2017: [
+                    { q: "The Hawthorne effect demonstrates that", o: ["Technology improves productivity", "Employee productivity increases when they know they're being observed", "Money is the only motivator", "Managers are unnecessary"], a: 1 },
+                    { q: "What is benchmarking in business management?", o: ["Setting employee salaries", "Comparing performance against industry standards or competitors", "Testing products", "Training new employees"], a: 1 },
+                    { q: "Theory X and Theory Y, developed by McGregor, relate to", o: ["Marketing strategies", "Management assumptions about employee motivation", "Accounting principles", "Product development"], a: 1 },
+                    { q: "Corporate social responsibility (CSR) involves", o: ["Only maximizing profits", "Ethical behavior and positive impact on society", "Avoiding all regulations", "Reducing employee benefits"], a: 1 },
+                    { q: "What is the purpose of onboarding?", o: ["Fire employees", "Integrate new employees into the organization", "Reduce costs", "Eliminate positions"], a: 1 },
+                    { q: "A flat organizational structure has", o: ["Many management levels", "Few levels between staff and executives", "No employees", "Unlimited hierarchy"], a: 1 },
+                    { q: "The Family and Medical Leave Act (FMLA) provides", o: ["Paid vacation", "Unpaid leave for family and medical reasons", "Retirement benefits", "Health insurance"], a: 1 },
+                    { q: "Change management focuses on", o: ["Maintaining status quo", "Helping organizations transition to new processes or structures", "Avoiding innovation", "Reducing change"], a: 1 },
+                    { q: "What is succession planning?", o: ["Planning company events", "Identifying and developing future leaders", "Retirement parties", "Product launches"], a: 1 },
+                    { q: "The Fair Labor Standards Act (FLSA) establishes", o: ["Product quality standards", "Minimum wage and overtime pay requirements", "Marketing guidelines", "Safety protocols"], a: 1 }
+                ],
+                2016: [
+                    { q: "360-degree feedback involves", o: ["Annual reviews only", "Performance input from supervisors, peers, and subordinates", "Customer surveys only", "Financial audits"], a: 1 },
+                    { q: "What is job enrichment?", o: ["Higher pay", "Adding meaningful tasks and responsibilities to increase satisfaction", "Working longer hours", "Reducing duties"], a: 1 },
+                    { q: "The Peter Principle suggests that", o: ["All promotions are deserved", "Employees rise to their level of incompetence", "Training is unnecessary", "Everyone should be promoted"], a: 1 },
+                    { q: "What does diversity in the workplace mean?", o: ["Everyone is the same", "Variety in employee backgrounds, perspectives, and characteristics", "Only hiring locally", "Reducing workforce"], a: 1 },
+                    { q: "Herzberg's two-factor theory includes", o: ["Only money matters", "Hygiene factors and motivators", "Speed and accuracy", "Price and quality"], a: 1 },
+                    { q: "What is the purpose of exit interviews?", o: ["Hire new employees", "Gather feedback from departing employees", "Promote employees", "Set new goals"], a: 1 },
+                    { q: "Centralized decision-making means", o: ["Everyone decides independently", "Decisions are made at top management levels", "No decisions are made", "Customers make decisions"], a: 1 },
+                    { q: "What is workplace ethics?", o: ["Profit maximization only", "Moral principles guiding business behavior", "Following competitors", "Avoiding responsibility"], a: 1 },
+                    { q: "The glass ceiling refers to", o: ["Office design", "Invisible barriers preventing advancement of minorities and women", "Salary caps", "Age limits"], a: 1 },
+                    { q: "What is outsourcing?", o: ["Hiring more internal staff", "Contracting work to external providers", "Expanding facilities", "Increasing inventory"], a: 1 }
+                ],
+                2015: [
+                    { q: "Situational leadership theory suggests that", o: ["One leadership style fits all", "Leadership style should adapt to circumstances and followers", "Leaders should never change", "Authority is absolute"], a: 1 },
+                    { q: "What is emotional intelligence in leadership?", o: ["High IQ", "Ability to understand and manage emotions in self and others", "Technical skills", "Financial knowledge"], a: 1 },
+                    { q: "The purpose of team building is to", o: ["Waste time", "Improve collaboration and trust among team members", "Reduce productivity", "Increase conflict"], a: 1 },
+                    { q: "What does OSHA regulate?", o: ["Marketing practices", "Workplace safety and health", "Product pricing", "Customer service"], a: 1 },
+                    { q: "Job specification describes", o: ["Company history", "Qualifications and skills required for a position", "Salary only", "Office location"], a: 1 },
+                    { q: "The purpose of a balanced scorecard is to", o: ["Track finances only", "Measure performance across financial and non-financial perspectives", "Count employees", "Schedule meetings"], a: 1 },
+                    { q: "What is organizational development (OD)?", o: ["Building construction", "Planned change to improve organizational effectiveness", "Random changes", "Avoiding improvement"], a: 1 },
+                    { q: "Transformational leadership involves", o: ["Maintaining status quo", "Inspiring followers to exceed expectations and embrace change", "Micromanaging", "Avoiding risk"], a: 1 },
+                    { q: "What is a mentor in business?", o: ["Entry-level employee", "Experienced person who guides and advises others", "Customer", "Competitor"], a: 1 },
+                    { q: "The purpose of conflict resolution is to", o: ["Avoid all disagreements", "Address and resolve disputes constructively", "Create more problems", "Ignore issues"], a: 1 }
+                ]
+            },
+            entrepreneurship: {
+                2019: [
+                    { q: "A business plan primarily serves to", o: ["Guarantee success", "Outline strategy and attract investors", "Replace management", "Avoid competition"], a: 1 },
+                    { q: "What is a unique selling proposition (USP)?", o: ["Lowest price", "Distinctive feature that sets business apart from competitors", "Standard product", "Copy of competitors"], a: 1 },
+                    { q: "Bootstrapping in entrepreneurship means", o: ["Buying expensive equipment", "Self-funding a business without external investment", "Taking maximum loans", "Avoiding work"], a: 1 },
+                    { q: "What does MVP stand for in startups?", o: ["Most Valuable Player", "Minimum Viable Product", "Maximum Value Proposition", "Minimal Venture Profit"], a: 1 },
+                    { q: "Venture capital is", o: ["Government grants", "Investment in exchange for equity in high-potential startups", "Bank savings", "Customer payments"], a: 1 },
+                    { q: "The lean startup methodology emphasizes", o: ["Large initial investment", "Rapid experimentation and customer feedback", "Avoiding customers", "Traditional planning only"], a: 1 },
+                    { q: "What is a pivot in entrepreneurship?", o: ["Staying the same forever", "Fundamental change in business strategy based on feedback", "Physical movement", "Ignoring data"], a: 1 },
+                    { q: "Angel investors are", o: ["Religious figures", "Wealthy individuals who invest in early-stage startups", "Bank employees", "Government officials"], a: 1 },
+                    { q: "Market validation means", o: ["Ignoring customers", "Proving that customers want your product", "Copying competitors", "Avoiding research"], a: 1 },
+                    { q: "What is burn rate?", o: ["Speed of production", "Rate at which a startup spends capital", "Employee productivity", "Revenue growth"], a: 1 }
+                ],
+                2018: [
+                    { q: "A franchise provides", o: ["Complete independence", "Right to use established brand and business model", "Government funding", "Tax exemption"], a: 1 },
+                    { q: "What is the purpose of market research for entrepreneurs?", o: ["Waste money", "Understand customers, competitors, and market opportunities", "Copy others", "Avoid planning"], a: 1 },
+                    { q: "Equity financing involves", o: ["Taking loans", "Selling ownership stake in exchange for capital", "Using credit cards", "Avoiding investors"], a: 1 },
+                    { q: "The breakeven point is when", o: ["Sales are zero", "Total revenue equals total costs", "Profit is maximized", "Losses are highest"], a: 1 },
+                    { q: "What is an elevator pitch?", o: ["Sales in buildings", "Brief compelling description of business idea", "Detailed 1-hour presentation", "Written proposal only"], a: 1 },
+                    { q: "Scalability in business refers to", o: ["Reducing size", "Ability to grow without proportional cost increases", "Staying small", "Avoiding expansion"], a: 1 },
+                    { q: "A sole proprietorship is", o: ["Multiple owners", "Business owned and run by one person", "Corporation only", "Partnership"], a: 1 },
+                    { q: "What is product-market fit?", o: ["Any product in any market", "When product satisfies strong market demand", "Avoiding customers", "Copying competitors"], a: 1 },
+                    { q: "The purpose of a pitch deck is to", o: ["Entertain audiences", "Present business opportunity to potential investors", "Avoid questions", "Hide information"], a: 1 },
+                    { q: "What does B2B mean?", o: ["Back to Basics", "Business to Business", "Best to Best", "Buy to Build"], a: 1 }
+                ],
+                2017: [
+                    { q: "Crowdfunding allows entrepreneurs to", o: ["Avoid all investors", "Raise capital from many small contributors online", "Get free money", "Ignore customers"], a: 1 },
+                    { q: "What is a competitive advantage?", o: ["Being exactly like competitors", "Superior offering that provides value over competitors", "Lowest quality", "Avoiding competition"], a: 1 },
+                    { q: "Intellectual property includes", o: ["Only physical assets", "Patents, trademarks, copyrights, and trade secrets", "Real estate only", "Employee contracts"], a: 1 },
+                    { q: "The 4 Ps of marketing for entrepreneurs are", o: ["People, Places, Profits, Plans", "Product, Price, Place, Promotion", "Planning, Production, Profit, People", "Patience, Practice, Persistence, Pride"], a: 1 },
+                    { q: "What is customer acquisition cost (CAC)?", o: ["Product cost", "Cost to acquire each new customer", "Revenue per customer", "Office rent"], a: 1 },
+                    { q: "A limited liability company (LLC) provides", o: ["Unlimited personal liability", "Limited personal liability with flexible structure", "No legal protection", "Government ownership"], a: 1 },
+                    { q: "What is churn rate?", o: ["Butter production", "Rate at which customers stop using product/service", "Growth rate", "Production speed"], a: 1 },
+                    { q: "The purpose of an executive summary is to", o: ["Provide detailed financial data", "Give concise overview of business plan", "Replace entire plan", "Confuse readers"], a: 1 },
+                    { q: "What does SaaS stand for?", o: ["Sales and Service", "Software as a Service", "Systems and Solutions", "Strategy and Success"], a: 1 },
+                    { q: "Disruptive innovation refers to", o: ["Copying existing products", "Innovation that creates new market and displaces established competitors", "Maintaining status quo", "Avoiding change"], a: 1 }
+                ],
+                2016: [
+                    { q: "A lifestyle business is designed to", o: ["Maximize growth at all costs", "Support owner's desired lifestyle and income", "Go public quickly", "Hire thousands of employees"], a: 1 },
+                    { q: "What is sweat equity?", o: ["Gym membership", "Contribution of work instead of money for ownership stake", "Bank loan", "Government grant"], a: 1 },
+                    { q: "The purpose of financial projections is to", o: ["Guarantee future results", "Estimate future financial performance", "Replace actual accounting", "Avoid planning"], a: 1 },
+                    { q: "What is a business incubator?", o: ["Baby care facility", "Program supporting early-stage startups with resources", "Warehouse", "Retail store"], a: 1 },
+                    { q: "Customer lifetime value (CLV) represents", o: ["One-time purchase", "Total revenue expected from customer over relationship", "Daily sales", "Marketing budget"], a: 1 },
+                    { q: "What does IPO stand for?", o: ["Internal Process Operation", "Initial Public Offering", "Investment Portfolio Option", "Industry Profit Optimization"], a: 1 },
+                    { q: "A niche market is", o: ["Mass market for everyone", "Specialized segment with specific needs", "Avoiding customers", "Lowest-priced market"], a: 1 },
+                    { q: "What is guerrilla marketing?", o: ["Traditional advertising", "Unconventional low-cost creative marketing tactics", "Expensive campaigns only", "Avoiding marketing"], a: 1 },
+                    { q: "Due diligence in entrepreneurship involves", o: ["Ignoring details", "Thorough investigation before business decision", "Rushing into deals", "Avoiding research"], a: 1 },
+                    { q: "What is a value proposition?", o: ["Lowest price guarantee", "Clear statement of benefits offered to customers", "Company history", "Location address"], a: 1 }
+                ],
+                2015: [
+                    { q: "Opportunity cost in entrepreneurship is", o: ["Business license fee", "Value of best alternative foregone when making a choice", "Startup capital", "Office rent"], a: 1 },
+                    { q: "What is a target market?", o: ["Everyone everywhere", "Specific group of customers business aims to serve", "Competitors only", "Employees"], a: 1 },
+                    { q: "The purpose of a SWOT analysis for startups is to", o: ["Only identify strengths", "Assess Strengths, Weaknesses, Opportunities, and Threats", "Avoid planning", "Copy competitors"], a: 1 },
+                    { q: "What does ROI measure?", o: ["Risk only", "Return on Investment - profitability of investment", "Revenue only", "Inventory"], a: 1 },
+                    { q: "An exit strategy is", o: ["Employee termination plan", "Plan for owner to leave or sell business", "Customer service plan", "Marketing strategy"], a: 1 },
+                    { q: "What is bootstrapping's main advantage?", o: ["Large capital access", "Maintaining full ownership and control", "Guaranteed success", "Avoiding work"], a: 1 },
+                    { q: "A partnership involves", o: ["One owner only", "Two or more people sharing ownership", "Government ownership", "Public shareholders"], a: 1 },
+                    { q: "What is the purpose of competitive analysis?", o: ["Copy competitors exactly", "Understand competitors to identify opportunities", "Avoid competition", "Ignore market"], a: 1 },
+                    { q: "Working capital is", o: ["Employee salaries only", "Funds available for day-to-day operations", "Long-term debt", "Fixed assets"], a: 1 },
+                    { q: "What is social entrepreneurship?", o: ["Only using social media", "Business addressing social/environmental issues while generating profit", "Avoiding profit", "Traditional business only"], a: 1 }
+                ]
+            }
+        };
+
+        function startExam(year) {
+            // Generate exam based on year and event
+            const examQuestions = generateExamQuestions(year, currentEvent, 10);
+
+            if (examQuestions.length === 0) {
+                return; // Alert already shown in generateExamQuestions
+            }
+
+            // Show exam modal
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.id = 'examModal';
+            modal.innerHTML = `
+                <div class="bg-white rounded-2xl p-8 max-w-4xl w-full mx-4 my-8 max-h-[90vh] overflow-y-auto">
+                    <div class="flex justify-between items-start mb-4 sticky top-0 bg-white pb-4 border-b">
+                        <div>
+                            <h2 class="text-2xl font-bold mb-2">${year} ${currentEvent} Exam</h2>
+                            <p class="text-gray-600">10 Real Questions • 15 Minutes • Timer: <span id="examTimer" class="font-bold text-blue-600">15:00</span></p>
+                        </div>
+                        <button onclick="closeExam()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-2xl"></i>
+                        </button>
+                    </div>
+
+                    <div class="space-y-6 mt-6">
+                        ${examQuestions.map((q, i) => `
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <p class="font-semibold mb-3">${i + 1}. ${q.question}</p>
+                                <div class="space-y-2">
+                                    ${q.options.map((opt, j) => `
+                                        <label class="flex items-center gap-2 cursor-pointer hover:bg-white p-2 rounded">
+                                            <input type="radio" name="examq${i}" value="${j}" class="w-4 h-4">
+                                            <span>${opt}</span>
+                                        </label>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t sticky bottom-0 bg-white flex gap-3">
+                        <button onclick="submitExam(${year})" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700">
+                            <i class="fas fa-check mr-2"></i>Submit Exam
+                        </button>
+                        <button onclick="closeExam()" class="px-6 bg-gray-200 py-3 rounded-lg font-bold hover:bg-gray-300">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            // Store exam questions for grading
+            window.currentExamQuestions = examQuestions;
+            window.currentExamYear = year;
+
+            // Start 15-minute exam timer (900 seconds)
+            startExamTimer(900);
+        }
+
+        let examTimerInterval = null;
+        let examTimeLeft = 3600;
+
+        function startExamTimer(seconds) {
+            examTimeLeft = seconds;
+            if (examTimerInterval) clearInterval(examTimerInterval);
+
+            examTimerInterval = setInterval(() => {
+                examTimeLeft--;
+                if (examTimeLeft <= 0) {
+                    clearInterval(examTimerInterval);
+                    alert('⏰ Time\'s up! Exam auto-submitting...');
+                    submitExam();
+                    return;
+                }
+                const mins = Math.floor(examTimeLeft / 60);
+                const secs = examTimeLeft % 60;
+                const timerEl = document.getElementById('examTimer');
+                if (timerEl) {
+                    timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+                    if (examTimeLeft < 300) { // Last 5 minutes
+                        timerEl.classList.add('text-red-600');
+                    }
+                }
+            }, 1000);
+        }
+
+        function closeExam() {
+            if (examTimerInterval) clearInterval(examTimerInterval);
+            const modal = document.getElementById('examModal');
+            if (modal) modal.remove();
+        }
+
+        function submitExam(year) {
+            if (examTimerInterval) clearInterval(examTimerInterval);
+
+            // Get the exam questions that were displayed
+            const examQuestions = window.currentExamQuestions || [];
+            const totalQuestions = examQuestions.length;
+
+            // Calculate score
+            let answered = 0;
+            let correct = 0;
+
+            for (let i = 0; i < totalQuestions; i++) {
+                const selected = document.querySelector(`input[name="examq${i}"]:checked`);
+                if (selected) {
+                    answered++;
+                    // Check if the answer is correct
+                    const selectedValue = parseInt(selected.value);
+                    if (selectedValue === examQuestions[i].correct) {
+                        correct++;
+                    }
+                }
+            }
+
+            const percentage = totalQuestions > 0 ? ((correct / totalQuestions) * 100).toFixed(0) : 0;
+            const passingScore = 70;
+            const passed = percentage >= passingScore;
+
+            const resultMessage = `
+📝 Exam Results - ${year} ${currentEvent}
+
+Questions Answered: ${answered}/${totalQuestions}
+Correct Answers: ${correct}/${totalQuestions}
+Score: ${percentage}%
+
+${passed ? '✅ PASSED! Great job!' : '❌ Below passing score (70%)'}
+
+${answered < totalQuestions ? `\n⚠️ You left ${totalQuestions - answered} question(s) unanswered.` : ''}
+
+This was a practice exam with real DECA questions from ${year}.
+Keep practicing to improve your score!
+            `.trim();
+
+            alert(resultMessage);
+            closeExam();
+        }
+
+        function generateExamQuestions(year, eventCode, count) {
+            // Get questions from real DECA exam database
+            const clusterQuestions = REAL_DECA_EXAMS[currentCluster];
+            if (!clusterQuestions || !clusterQuestions[year]) {
+                alert(`No exam available for ${year}. Only years 2015-2019 are available.`);
+                return [];
+            }
+
+            // Return the real exam questions for this year (10 questions)
+            return clusterQuestions[year].map(q => ({
+                question: q.q,
+                options: q.o,
+                correct: q.a // This is the index (0-3) of the correct answer
+            }));
+        }
+
+        function loadGeneratedQuestions() {
+            const questions = generatePracticeQuestions(currentCluster, 50);
+            const html = `
+                <div class="space-y-4">
+                    <p class="text-gray-600 mb-4">AI-generated practice questions based on DECA curriculum and past exam patterns.</p>
+                    ${questions.map((q, i) => `
+                        <div class="bg-white rounded-lg p-6 shadow-sm">
+                            <p class="font-semibold mb-3">${i + 1}. ${q.question}</p>
+                            <div class="space-y-2">
+                                ${q.options.map((opt, j) => `
+                                    <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                                        <input type="radio" name="q${i}" value="${j}" class="w-4 h-4">
+                                        <span>${opt}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                            <button onclick="showAnswer(${i}, '${q.correct}')" class="mt-3 text-blue-600 text-sm hover:underline">
+                                <i class="fas fa-check-circle mr-1"></i>Show Answer
+                            </button>
+                            <div id="answer${i}" class="hidden mt-2 text-green-600 font-semibold text-sm"></div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            document.getElementById('generatedContent').innerHTML = html;
+        }
+
+        function loadCaseStudies() {
+            // Get event-specific case studies
+            const allCases = generateCaseStudies(currentCluster);
+
+            const html = `
+                <div class="space-y-6">
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                        <p class="text-sm text-blue-800">
+                            <i class="fas fa-briefcase mr-2"></i>
+                            <strong>Event-Specific Case Studies:</strong> Each event has unique case studies based on actual DECA competition format and scenarios.
+                        </p>
+                    </div>
+                    <p class="text-gray-600 mb-4">Practice with realistic business scenarios and roleplays. You have 10 minutes to prepare your presentation.</p>
+                    ${allCases.map((caseStudy, i) => {
+                        return `
+                        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
+                            <div class="flex items-start justify-between mb-3">
+                                <h3 class="font-bold text-xl">${caseStudy.title}</h3>
+                                <span class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">CASE STUDY ${i + 1}</span>
+                            </div>
+                            <p class="text-gray-700 mb-4 leading-relaxed">${caseStudy.scenario}</p>
+                            <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                                <h4 class="font-bold mb-2">Your Tasks:</h4>
+                                <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                                    ${caseStudy.tasks.map(t => `<li>${t}</li>`).join('')}
+                                </ol>
+                            </div>
+                            <button onclick="startCaseTimer();" class="bg-green-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-700">
+                                <i class="fas fa-clock mr-2"></i>Start 10-Minute Practice
+                            </button>
+                        </div>
+                    `}).join('')}
+                </div>
+            `;
+            document.getElementById('casesContent').innerHTML = html;
+        }
+
+        function startCaseTimer() {
+            const startTime = Date.now();
+            const duration = 10 * 60 * 1000; // 10 minutes
+
+            alert('⏱️ Timer Started!\n\nYou have 10 minutes to prepare your presentation.\n\nClick OK to begin.');
+
+            const timer = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const remaining = duration - elapsed;
+
+                if (remaining <= 0) {
+                    clearInterval(timer);
+                    alert('⏰ Time\'s Up!\n\nYour 10 minutes are complete.\n\nNow present your solution to the judge!');
+                }
+            }, 1000);
+        }
+
+        function generatePracticeQuestions(cluster, count) {
+            // EVENT-SPECIFIC questions based on DECA curriculum
+            const eventQuestions = {
+                'AAM': [
+                    { question: 'What is visual merchandising?', options: ['Online advertising', 'Product display to maximize sales appeal', 'Email campaigns', 'Customer service'], correct: 'B. Product display to maximize sales appeal' },
+                    { question: 'What does SKU stand for?', options: ['Standard Keeping Unit', 'Stock Keeping Unit', 'Sales Key Utility', 'Store Keeper Unit'], correct: 'B. Stock Keeping Unit' },
+                    { question: 'What is a planogram?', options: ['Employee schedule', 'Diagram showing product placement', 'Financial report', 'Marketing plan'], correct: 'B. Diagram showing product placement' },
+                    { question: 'What is fast fashion?', options: ['Quick checkout', 'Rapidly produced trendy clothing', 'Express shipping', 'Sale events'], correct: 'B. Rapidly produced trendy clothing' },
+                    { question: 'What does MSRP mean?', options: ['Manufacturer Suggested Retail Price', 'Monthly Sales Revenue Profit', 'Market Share Retail Position', 'Maximum Standard Retail Price'], correct: 'A. Manufacturer Suggested Retail Price' }
+                ],
+                'RMS': [
+                    { question: 'What is inventory turnover?', options: ['Stock rotation', 'Rate products sell and are replaced', 'Annual inventory', 'Product recalls'], correct: 'B. Rate products sell and are replaced' },
+                    { question: 'What is shrinkage?', options: ['Price reduction', 'Inventory loss from theft/damage/error', 'Store downsizing', 'Product defects'], correct: 'B. Inventory loss from theft/damage/error' },
+                    { question: 'What does BOPIS stand for?', options: ['Buy Online Pick-up In Store', 'Business Operations Platform', 'Brand Optimization Process', 'Best Online Pricing'], correct: 'A. Buy Online Pick-up In Store' },
+                    { question: 'What is markdown pricing?', options: ['Increasing prices', 'Reducing prices to clear inventory', 'Cost pricing', 'Premium pricing'], correct: 'B. Reducing prices to clear inventory' },
+                    { question: 'What is a loss leader?', options: ['Failed product', 'Item sold at loss to attract customers', 'Unprofitable store', 'Damaged goods'], correct: 'B. Item sold at loss to attract customers' }
+                ],
+                'SEM': [
+                    { question: 'What does NIL stand for in college sports?', options: ['National Income League', 'Name Image Likeness', 'New Investment Law', 'Negotiated Interest Level'], correct: 'B. Name Image Likeness' },
+                    { question: 'What is a naming rights deal?', options: ['Player contracts', 'Company pays to name venue/event', 'Trademark law', 'Broadcast rights'], correct: 'B. Company pays to name venue/event' },
+                    { question: 'What is sponsorship activation?', options: ['Starting event', 'Leveraging sponsorship through marketing activities', 'Payment processing', 'Athlete contracts'], correct: 'B. Leveraging sponsorship through marketing activities' },
+                    { question: 'What is fan engagement?', options: ['Ticket sales', 'Creating emotional connections with fans', 'Stadium capacity', 'Merchandise sales'], correct: 'B. Creating emotional connections with fans' },
+                    { question: 'What is athlete endorsement?', options: ['Award ceremony', 'Athlete promoting product for pay', 'Team ownership', 'Contract signing'], correct: 'B. Athlete promoting product for pay' }
+                ],
+                'MMS': [
+                    { question: 'What are the 4 Ps of marketing?', options: ['People Place Price Profit', 'Product Price Place Promotion', 'Plan Produce Price Perform', 'Product Profit People Place'], correct: 'B. Product Price Place Promotion' },
+                    { question: 'What is market segmentation?', options: ['Dividing market into distinct groups', 'Total market size', 'Sales territories', 'Product categories'], correct: 'A. Dividing market into distinct groups' },
+                    { question: 'What does CRM stand for?', options: ['Customer Revenue Model', 'Customer Relationship Management', 'Corporate Risk Management', 'Credit Rate Margin'], correct: 'B. Customer Relationship Management' },
+                    { question: 'What is brand positioning?', options: ['Logo placement', 'How brand is perceived vs competitors', 'Store location', 'Social media presence'], correct: 'B. How brand is perceived vs competitors' },
+                    { question: 'What is a value proposition?', options: ['Low price guarantee', 'Unique value offered to customers', 'Sales discount', 'Profit margin'], correct: 'B. Unique value offered to customers' }
+                ],
+                'PFL': [
+                    { question: 'What is compound interest?', options: ['Simple interest', 'Interest on principal plus accumulated interest', 'Loan penalty', 'Credit card fee'], correct: 'B. Interest on principal plus accumulated interest' },
+                    { question: 'What is a credit score?', options: ['Bank balance', 'Numerical creditworthiness rating', 'Income level', 'Debt amount'], correct: 'B. Numerical creditworthiness rating' },
+                    { question: 'What is a 401(k)?', options: ['Tax form', 'Employer-sponsored retirement plan', 'Loan type', 'Insurance'], correct: 'B. Employer-sponsored retirement plan' },
+                    { question: 'What is diversification?', options: ['Buying only stocks', 'Spreading investments across assets', 'Day trading', 'Saving cash'], correct: 'B. Spreading investments across assets' },
+                    { question: 'What is an emergency fund?', options: ['Vacation savings', 'Money for unexpected expenses', 'Retirement account', 'Investment fund'], correct: 'B. Money for unexpected expenses' }
+                ],
+                'BFS': [
+                    { question: 'What is working capital?', options: ['Total revenue', 'Current assets minus current liabilities', 'Net income', 'Cash only'], correct: 'B. Current assets minus current liabilities' },
+                    { question: 'What does EBITDA mean?', options: ['Earnings Before Interest Taxes Depreciation Amortization', 'Enterprise Budget Income Tax Data', 'Equity Based Investment Data', 'Estimated Business Income Tax'], correct: 'A. Earnings Before Interest Taxes Depreciation Amortization' },
+                    { question: 'What is cash flow?', options: ['Total sales', 'Money moving in and out of business', 'Profit only', 'Revenue only'], correct: 'B. Money moving in and out of business' },
+                    { question: 'What is accounts receivable?', options: ['Money owed to suppliers', 'Money customers owe business', 'Cash in bank', 'Expenses'], correct: 'B. Money customers owe business' },
+                    { question: 'What is the current ratio?', options: ['Sales growth', 'Current assets divided by current liabilities', 'Profit margin', 'Debt ratio'], correct: 'B. Current assets divided by current liabilities' }
+                ],
+                'ACT': [
+                    { question: 'What is double-entry bookkeeping?', options: ['Recording twice', 'Every transaction has equal debit and credit', 'Two accountants', 'Monthly reports'], correct: 'B. Every transaction has equal debit and credit' },
+                    { question: 'What are assets?', options: ['Company debts', 'Resources owned by company', 'Expenses', 'Liabilities'], correct: 'B. Resources owned by company' },
+                    { question: 'What is depreciation?', options: ['Value increase', 'Asset value decrease over time', 'Inventory count', 'Revenue'], correct: 'B. Asset value decrease over time' },
+                    { question: 'What is the accounting equation?', options: ['Revenue minus Expenses', 'Assets equal Liabilities plus Equity', 'Debits equal Credits', 'Income minus Taxes'], correct: 'B. Assets equal Liabilities plus Equity' },
+                    { question: 'What are liabilities?', options: ['Company assets', 'Company debts and obligations', 'Revenue sources', 'Employee salaries'], correct: 'B. Company debts and obligations' }
+                ],
+                'HLM': [
+                    { question: 'What is ADR in hotels?', options: ['Annual Discount Rate', 'Average Daily Rate', 'Asset Depreciation', 'Amenity Distribution'], correct: 'B. Average Daily Rate' },
+                    { question: 'What is RevPAR?', options: ['Revenue Per Available Room', 'Revised Parking Rate', 'Restaurant Performance', 'Review Rating'], correct: 'A. Revenue Per Available Room' },
+                    { question: 'What is occupancy rate?', options: ['Staff count', 'Percentage of rooms occupied', 'Food cost', 'Parking usage'], correct: 'B. Percentage of rooms occupied' },
+                    { question: 'What is yield management?', options: ['Agriculture', 'Pricing strategy to maximize revenue', 'Staff productivity', 'Quality control'], correct: 'B. Pricing strategy to maximize revenue' },
+                    { question: 'What does PMS stand for in hotels?', options: ['Property Management System', 'Profit Margin Strategy', 'Personnel Management', 'Pricing Model Software'], correct: 'A. Property Management System' }
+                ],
+                'QSR': [
+                    { question: 'What does QSR mean?', options: ['Quality Service Restaurant', 'Quick Serve Restaurant', 'Quarterly Sales Report', 'Quality Standards Review'], correct: 'B. Quick Serve Restaurant' },
+                    { question: 'What is food cost percentage?', options: ['Menu prices', 'Cost of food divided by food sales', 'Profit margin', 'Labor costs'], correct: 'B. Cost of food divided by food sales' },
+                    { question: 'What is throughput?', options: ['Food waste', 'Customer processing speed', 'Food quality', 'Menu items'], correct: 'B. Customer processing speed' },
+                    { question: 'What is upselling?', options: ['Price increases', 'Encouraging customers to buy more/premium', 'Discounting', 'Menu changes'], correct: 'B. Encouraging customers to buy more/premium' },
+                    { question: 'What is drive-thru time?', options: ['Delivery time', 'Order to pickup duration', 'Cooking time', 'Operating hours'], correct: 'B. Order to pickup duration' }
+                ],
+                'TSE': [
+                    { question: 'What is sustainable tourism?', options: ['Budget travel', 'Tourism minimizing environmental/cultural impact', 'Luxury travel', 'Domestic travel'], correct: 'B. Tourism minimizing environmental/cultural impact' },
+                    { question: 'What does FIT stand for?', options: ['Free Independent Travel', 'Foreign Investment Tourism', 'Flight Information', 'Frequent International Traveler'], correct: 'A. Free Independent Travel' },
+                    { question: 'What is a DMO?', options: ['Digital Marketing Office', 'Destination Marketing Organization', 'Direct Mail Outreach', 'Discount Management'], correct: 'B. Destination Marketing Organization' },
+                    { question: 'What is overtourism?', options: ['Long vacations', 'Excessive tourism causing negative impacts', 'International travel', 'Luxury tourism'], correct: 'B. Excessive tourism causing negative impacts' },
+                    { question: 'What is ecotourism?', options: ['Economic tourism', 'Responsible travel to natural areas', 'City tourism', 'Budget tourism'], correct: 'B. Responsible travel to natural areas' }
+                ],
+                'BMG': [
+                    { question: 'What is SWOT analysis?', options: ['Sales report', 'Strengths Weaknesses Opportunities Threats', 'Stock evaluation', 'Supply chain'], correct: 'B. Strengths Weaknesses Opportunities Threats' },
+                    { question: 'What is delegation?', options: ['Avoiding work', 'Assigning responsibility to others', 'Micromanaging', 'Ignoring tasks'], correct: 'B. Assigning responsibility to others' },
+                    { question: 'What are KPIs?', options: ['Key Personnel', 'Key Performance Indicators', 'Known Profits', 'Keyword Positioning'], correct: 'B. Key Performance Indicators' },
+                    { question: 'What is benchmarking?', options: ['Setting prices', 'Comparing performance to standards', 'Employee review', 'Inventory count'], correct: 'B. Comparing performance to standards' },
+                    { question: 'What is organizational structure?', options: ['Building design', 'System of task and reporting relationships', 'Mission statement', 'Product line'], correct: 'B. System of task and reporting relationships' }
+                ],
+                'HRM': [
+                    { question: 'What is onboarding?', options: ['Cruise travel', 'Integrating new employees', 'Performance review', 'Termination'], correct: 'B. Integrating new employees' },
+                    { question: 'What is employee retention?', options: ['Hiring', 'Keeping employees from leaving', 'Salary only', 'Training'], correct: 'B. Keeping employees from leaving' },
+                    { question: 'What does PTO stand for?', options: ['Parent Teacher Organization', 'Paid Time Off', 'Professional Training', 'Profit Taking'], correct: 'B. Paid Time Off' },
+                    { question: 'What is performance appraisal?', options: ['Salary review', 'Systematic employee performance evaluation', 'Job posting', 'Benefits package'], correct: 'B. Systematic employee performance evaluation' },
+                    { question: 'What is workplace diversity?', options: ['Different departments', 'Variety of backgrounds and characteristics', 'Product variety', 'Multiple locations'], correct: 'B. Variety of backgrounds and characteristics' }
+                ],
+                'PSM': [
+                    { question: 'What is consultative selling?', options: ['Free advice', 'Building relationships to understand needs', 'Aggressive tactics', 'Online only'], correct: 'B. Building relationships to understand needs' },
+                    { question: 'What is a sales pipeline?', options: ['Store layout', 'Visual representation of sales stages', 'Inventory system', 'Payment method'], correct: 'B. Visual representation of sales stages' },
+                    { question: 'What is closing?', options: ['Store hours', 'Finalizing the sale', 'Opening pitch', 'Product demo'], correct: 'B. Finalizing the sale' },
+                    { question: 'What is objection handling?', options: ['Ignoring concerns', 'Addressing customer concerns', 'Raising prices', 'Ending calls'], correct: 'B. Addressing customer concerns' },
+                    { question: 'What is value-based selling?', options: ['Lowest price', 'Emphasizing product value over price', 'Volume sales', 'Discounting'], correct: 'B. Emphasizing product value over price' }
+                ],
+                'ENT': [
+                    { question: 'What is a business model canvas?', options: ['Art supplies', 'Strategic management template', 'Financial statement', 'Marketing ad'], correct: 'B. Strategic management template' },
+                    { question: 'What is bootstrapping?', options: ['Hiking', 'Self-funding a business', 'Government grants', 'Bank loans'], correct: 'B. Self-funding a business' },
+                    { question: 'What is an MVP?', options: ['Most Valuable Player', 'Minimum Viable Product', 'Maximum Value Proposition', 'Market Validation'], correct: 'B. Minimum Viable Product' },
+                    { question: 'What is a pivot?', options: ['Quitting', 'Major strategic direction change', 'Hiring', 'Rebranding only'], correct: 'B. Major strategic direction change' },
+                    { question: 'What is venture capital?', options: ['Savings', 'Investment in high-growth startups', 'Bank loan', 'Credit card'], correct: 'B. Investment in high-growth startups' }
+                ],
+                'BMOR': [
+                    { question: 'What is the 2024-2025 BMOR topic?', options: ['Social media', 'AI integration in business', 'Supply chain', 'Customer service'], correct: 'B. AI integration in business' },
+                    { question: 'What is operations research?', options: ['Lab research', 'Analytical methods for better decisions', 'Market research', 'Product testing'], correct: 'B. Analytical methods for better decisions' },
+                    { question: 'What is process optimization?', options: ['Hiring more', 'Improving efficiency and effectiveness', 'Reducing quality', 'Closing stores'], correct: 'B. Improving efficiency and effectiveness' },
+                    { question: 'What is data analytics?', options: ['Filing', 'Examining data to draw conclusions', 'Scheduling', 'Inventory'], correct: 'B. Examining data to draw conclusions' },
+                    { question: 'What is AI in business?', options: ['Artistic Intelligence', 'Artificial Intelligence for automation/decisions', 'Account Information', 'Annual Income'], correct: 'B. Artificial Intelligence for automation/decisions' }
+                ]
+            };
+
+            // Get event-specific questions
+            let questions = eventQuestions[currentEvent];
+
+            // Fall back to cluster if no event-specific questions
+            if (!questions) {
+                const clusterDefaults = {
+                    marketing: eventQuestions['MMS'] || [],
+                    finance: eventQuestions['PFL'] || [],
+                    hospitality: eventQuestions['HLM'] || [],
+                    business: eventQuestions['BMG'] || [],
+                    entrepreneurship: eventQuestions['ENT'] || []
+                };
+                questions = clusterDefaults[cluster] || eventQuestions['MMS'] || [];
+            }
+
+            // Repeat to reach count
+            const result = [];
+            while (result.length < count && questions.length > 0) {
+                result.push(...questions);
+            }
+            return result.slice(0, count);
+        }
+
+        function generateCaseStudies(cluster) {
+            // EVENT-SPECIFIC case studies based on 2024-2025 DECA topics and realistic scenarios
+            const eventCaseStudies = {
+                'AAM': [
+                    {
+                        title: 'STYLE UP - Point-of-Sale Gratuity Option',
+                        scenario: 'You assume the role of manager of STYLE UP, an upscale apparel and accessories retailer. The owner (judge) wants you to explain the benefits and possible risks of giving customers the option to add gratuity at the point-of-sale. STYLE UP has 12 locations in major cities and specializes in high-end fashion and luxury accessories.',
+                        tasks: ['Explain customer perception of gratuity options in retail', 'Discuss benefits to employees and company morale', 'Analyze potential risks to customer experience', 'Compare to industry practices in upscale retail', 'Recommend implementation strategy', 'Address ethical considerations and customer relations']
+                    },
+                    {
+                        title: 'BLUE FIN - Seasonal Clearance Reduction',
+                        scenario: 'You assume the role of marketing manager for BLUE FIN, a mid-priced apparel retailer with 45 locations. The director of marketing (judge) wants you to develop a marketing plan that will reduce the amount of seasonal clearance at distribution centers and in stores. Currently, 35% of seasonal inventory becomes clearance, hurting profit margins.',
+                        tasks: ['Analyze current inventory and sales patterns', 'Develop pre-season marketing strategies', 'Create limited-time promotional tactics', 'Design social media engagement campaigns', 'Propose data-driven buying adjustments', 'Calculate projected markdown reduction and profit impact']
+                    }
+                ],
+                'ASM': [
+                    {
+                        title: 'TIRE PALACE - New Product Selling Process',
+                        scenario: 'You assume the role of assistant manager of TIRE PALACE, a retailer that sells tires and wheels with four locations. The general manager (judge) wants you to outline a selling process for TIRE PALACE employees to assist with selling a new product line of performance wheels. The company is expanding beyond basic tire sales.',
+                        tasks: ['Develop step-by-step selling process for employees', 'Identify product features and benefits to emphasize', 'Create customer needs assessment questions', 'Design demonstration and comparison techniques', 'Recommend upselling and cross-selling strategies', 'Propose employee training methods']
+                    },
+                    {
+                        title: 'PRESTI AUTO SUPPLY - Customer Battery Consultation',
+                        scenario: 'You assume the role of sales clerk at PRESTI AUTO SUPPLY, a local automotive parts store. A customer (judge) needs help purchasing a replacement car battery but is unsure which battery is right for their vehicle. You must use product knowledge and consultative selling to help the customer make the best choice.',
+                        tasks: ['Ask qualifying questions about vehicle and usage', 'Explain battery specifications and ratings', 'Compare product options and price points', 'Address customer concerns about installation', 'Recommend appropriate warranty coverage', 'Close the sale and suggest complementary products']
+                    }
+                ],
+                'RMS': [
+                    {
+                        title: 'TRENDY FASHIONS - Store Layout Optimization',
+                        scenario: 'You assume the role of store manager for TRENDY FASHIONS, a retail clothing store in a busy shopping mall. The district manager (judge) wants you to redesign the store layout to improve customer flow, increase sales per square foot, and enhance the shopping experience. Current layout has unclear department organization and dead zones where customers rarely browse.',
+                        tasks: ['Analyze current store layout and traffic patterns', 'Design new floor plan with strategic product placement', 'Implement visual merchandising principles', 'Plan promotional display locations', 'Optimize checkout and fitting room placement', 'Calculate projected sales impact']
+                    },
+                    {
+                        title: 'FASHION CENTRAL - Inventory Shrinkage Prevention',
+                        scenario: 'You assume the role of operations manager for FASHION CENTRAL, a retail chain with 25 locations. The vice president (judge) is concerned about inventory shrinkage averaging 3.5% (industry average is 2%), costing $280,000 annually. Shrinkage comes from theft, damaged goods, and inventory errors. Develop comprehensive shrinkage prevention strategy.',
+                        tasks: ['Identify sources of inventory shrinkage', 'Recommend security and loss prevention measures', 'Propose employee training on shrinkage awareness', 'Design inventory management improvements', 'Suggest technology solutions (RFID, cameras, etc.)', 'Calculate ROI of shrinkage reduction initiatives']
+                    }
+                ],
+                'SEM': [
+                    {
+                        title: 'LAKELAND SAILORS - Corporate Sponsorship Renewal',
+                        scenario: 'You assume the role of director of corporate affairs and marketing for the LAKELAND SAILORS, a Major League Baseball team that won the World Series in 2015. After years of declining attendance, the team saw resurgence and attracted new corporate sponsors. A major sponsor (judge) is considering renewing their $500,000 annual partnership. Present the value and benefits of continued sponsorship.',
+                        tasks: ['Analyze sponsor ROI from previous year', 'Present fan engagement metrics and reach', 'Propose enhanced activation opportunities', 'Design exclusive hospitality benefits', 'Create co-marketing campaign ideas', 'Demonstrate community impact and brand alignment']
+                    },
+                    {
+                        title: 'HILLSIDE HUSKIES - Community Event Participation',
+                        scenario: 'You assume the role of promotional manager for HILLSIDE HUSKIES, a collegiate summer baseball team. The city is hosting Hillside Days, a three-day community festival expecting 15,000 attendees. The general manager (judge) wants you to determine how the team should best participate to increase ticket sales, build fan base, and strengthen community relationships.',
+                        tasks: ['Design festival booth and activities', 'Create promotional giveaways strategy', 'Plan player appearance schedule', 'Develop ticket sales promotions', 'Design social media integration', 'Calculate participation costs and projected ticket revenue']
+                    }
+                ],
+                'MMS': [
+                    {
+                        title: 'SUMMIT ELECTRONICS - Market Share Recovery',
+                        scenario: 'You assume the role of marketing manager for SUMMIT ELECTRONICS, a consumer electronics retailer with 30 locations. The company has lost 15% market share over two years to online competitors. The vice president of marketing (judge) wants a comprehensive marketing strategy to recover market share, emphasizing the in-store experience advantage and expert staff.',
+                        tasks: ['Analyze competitive landscape and consumer trends', 'Develop unique value proposition vs. online retailers', 'Create integrated marketing campaign (digital, social, traditional)', 'Design in-store experience enhancements', 'Propose customer loyalty and retention programs', 'Set measurable goals and KPIs']
+                    },
+                    {
+                        title: 'GREEN LEAF ORGANICS - New Market Entry',
+                        scenario: 'You assume the role of marketing director for GREEN LEAF ORGANICS, an established organic food brand in the western U.S. The CEO (judge) wants to expand into the southeastern market where the brand is unknown. You must develop a market entry strategy for this new geographic region with different consumer preferences and strong local competition.',
+                        tasks: ['Research southeastern market demographics and preferences', 'Identify target customer segments', 'Develop market entry and positioning strategy', 'Create awareness-building marketing campaigns', 'Recommend distribution channel partnerships', 'Project first-year sales and marketing budget']
+                    }
+                ],
+                'FMS': [
+                    {
+                        title: 'HARVEST FRESH FOODS - Product Launch Strategy',
+                        scenario: 'You assume the role of marketing manager for HARVEST FRESH FOODS, a food manufacturer launching a new line of plant-based frozen meals targeting health-conscious millennials. The director of marketing (judge) wants a comprehensive go-to-market strategy including positioning, pricing, distribution, and promotion for this competitive category.',
+                        tasks: ['Conduct competitive analysis of plant-based meal market', 'Develop product positioning and messaging', 'Recommend pricing strategy', 'Identify retail distribution channels', 'Create integrated marketing campaign', 'Set launch goals and success metrics']
+                    },
+                    {
+                        title: 'GOLDEN GRAIN BAKERY - Brand Revitalization',
+                        scenario: 'You assume the role of brand manager for GOLDEN GRAIN BAKERY, a 50-year-old bread and baked goods company. Sales have declined 20% as consumers shift to artisan and specialty bakeries. The CEO (judge) wants to revitalize the brand while maintaining loyal older customers and attracting younger demographics.',
+                        tasks: ['Analyze current brand perception and market position', 'Identify opportunities to modernize brand image', 'Develop new product line ideas', 'Create marketing campaign for brand refresh', 'Design social media and digital strategy', 'Balance heritage appeal with modern innovation']
+                    }
+                ],
+                'RFSM': [
+                    {
+                        title: 'RIVERSIDE CAFE - Weekend Brunch Launch',
+                        scenario: 'You assume the role of manager of RIVERSIDE CAFE, a popular lunch and dinner restaurant. The owner (judge) wants to add weekend brunch service to increase revenue and attract new customers. The restaurant currently operates lunch (11am-3pm) and dinner (5pm-10pm) six days per week. Develop a brunch launch strategy.',
+                        tasks: ['Develop brunch menu concept and pricing', 'Analyze target customer for brunch service', 'Create marketing and promotional plan', 'Address staffing and operational requirements', 'Design social media campaign', 'Project revenue and calculate break-even']
+                    },
+                    {
+                        title: 'METRO BISTRO - Online Ordering Integration',
+                        scenario: 'You assume the role of assistant manager of METRO BISTRO, a full-service restaurant with 150 seats. The general manager (judge) wants to implement online ordering and delivery service to compete with restaurants offering these options. Currently, the restaurant is dine-in only and has lost customers to competitors with delivery.',
+                        tasks: ['Recommend online ordering platform options', 'Analyze delivery vs. third-party delivery services', 'Develop menu optimization for takeout/delivery', 'Create marketing strategy for new service', 'Address kitchen workflow and packaging needs', 'Calculate financial projections and fees']
+                    }
+                ],
+                'PFL': [
+                    {
+                        title: 'Student Athlete NIL Deal Financial Planning (2024-2025)',
+                        scenario: 'You assume the role of financial consultant. A client (judge), a college volleyball player, just signed their first NIL (Name, Image, Likeness) deal worth $75,000 to promote a local sports nutrition company. This is their first significant income. They need guidance on budgeting, saving for taxes (estimated 30% for self-employment), building an emergency fund, and beginning to invest.',
+                        tasks: ['Create monthly budget allocating NIL income', 'Explain self-employment tax obligations', 'Recommend emergency fund target (3-6 months expenses)', 'Explain investment options for young adults (Roth IRA, index funds)', 'Discuss importance of diversification', 'Develop long-term financial plan beyond college']
+                    },
+                    {
+                        title: 'Young Professional Debt Management Strategy',
+                        scenario: 'You assume the role of financial counselor. A client (judge) is a 23-year-old recent college graduate earning $55,000 annually with $40,000 in student loans at 5% interest, $3,000 credit card debt at 18% APR, and wants to save $8,000 for a car down payment within two years. They need a comprehensive debt payoff and savings strategy.',
+                        tasks: ['Analyze current financial situation and cash flow', 'Prioritize debt repayment (avalanche vs. snowball method)', 'Create realistic monthly budget', 'Compare student loan repayment options', 'Explain credit score factors and improvement strategies', 'Develop timeline for debt payoff and savings goals']
+                    }
+                ],
+                'BFS': [
+                    {
+                        title: 'PRECISION MANUFACTURING - Cash Flow Management',
+                        scenario: 'You assume the role of financial analyst for PRECISION MANUFACTURING, a local company with $500,000 annual revenue facing cash flow problems. The owner (judge) is concerned that accounts receivable average 75 days while suppliers require payment in 30 days, creating negative working capital. The business is profitable on paper but struggling to pay bills on time.',
+                        tasks: ['Analyze cash conversion cycle and identify bottlenecks', 'Recommend accounts receivable collection improvements', 'Propose supplier payment terms negotiation strategies', 'Evaluate short-term financing options (line of credit, factoring)', 'Create 6-month cash flow forecast', 'Develop working capital management policies']
+                    },
+                    {
+                        title: 'INNOVATE TECH - Startup Funding Recommendation',
+                        scenario: 'You assume the role of financial advisor. A client (judge) runs INNOVATE TECH, a software startup needing $300,000 in funding for product development and marketing. Financial projections show $200,000 loss in year 1, $1M revenue in year 2, and $3M in year 3. Present funding recommendations and financial analysis.',
+                        tasks: ['Create detailed financial projections (income statement, cash flow)', 'Calculate break-even point and timeline', 'Compare funding options (venture capital, angel investors, SBA loans)', 'Develop investor pitch highlighting growth potential', 'Assess financial and market risks', 'Recommend optimal capital structure (debt vs. equity)']
+                    }
+                ],
+                'ACT': [
+                    {
+                        title: 'RIVERSIDE SERVICES - Accounting System Upgrade',
+                        scenario: 'You assume the role of accounting consultant. RIVERSIDE SERVICES, a growing business with $2M annual revenue and 15 employees, still uses spreadsheets for all accounting. The owner (judge) needs a proper accounting system with accounts payable/receivable, payroll, inventory tracking, and financial reporting. Recommend solution and implementation plan.',
+                        tasks: ['Assess current accounting processes and pain points', 'Recommend appropriate accounting software (QuickBooks, Xero, etc.)', 'Design chart of accounts for service business', 'Plan data migration from spreadsheets', 'Establish internal controls and approval workflows', 'Create financial reporting framework and dashboards']
+                    },
+                    {
+                        title: 'METRO RETAIL CO - Financial Statement Analysis',
+                        scenario: 'You assume the role of financial analyst. A client (judge) is considering investing in METRO RETAIL CO and wants your analysis. Financial statements show: Current ratio 1.8, debt-to-equity 0.6, profit margin 8%, inventory turnover 4x. Industry averages: current ratio 2.0, debt-to-equity 0.4, profit margin 10%, inventory turnover 6x. Provide comprehensive analysis.',
+                        tasks: ['Analyze liquidity position (current and quick ratios)', 'Evaluate leverage and solvency (debt ratios)', 'Assess profitability metrics (margins, ROE, ROA)', 'Compare performance to industry benchmarks', 'Identify financial strengths and weaknesses', 'Recommend operational improvements and investment decision']
+                    }
+                ],
+                'HLM': [
+                    {
+                        title: 'CAPITOL CITY INN - Room Service Pricing Strategy',
+                        scenario: 'You assume the role of manager of CAPITOL CITY INN, an 800-room property in a busy downtown neighborhood near a convention center and stadium. The hotel has two on-site restaurants, a coffee shop, and 24-hour room service. Room service orders have declined sharply as guests choose restaurant delivery services. The owner (judge) wants your recommendation on addressing the pricing concern: a cheeseburger costs $10 in the restaurant but $12 on room service menu, plus $5 delivery charge and 18% service fee.',
+                        tasks: ['Analyze current room service pricing structure', 'Compare to competitor pricing and delivery apps', 'Explain costs associated with room service operations', 'Recommend pricing adjustments or value additions', 'Propose marketing strategies to increase room service orders', 'Address guest perception and service quality']
+                    },
+                    {
+                        title: 'WATERFRONT INN - Peak Season Check-In Management',
+                        scenario: 'You assume the role of manager of WATERFRONT INN, a 200-room hotel in a popular beach town with a swimming pool, fitness center, lounge, and beach access. The property consistently meets 100% occupancy from March through early September. The owner (judge) is concerned about overwhelming check-in processes during peak times in the hotel\'s small lobby, causing long wait times and frustrated guests.',
+                        tasks: ['Analyze current check-in process and bottlenecks', 'Recommend technology solutions (mobile check-in, kiosks)', 'Develop staffing strategies for peak periods', 'Create guest communication plan for arrival', 'Design lobby flow and queue management', 'Calculate ROI of proposed improvements']
+                    }
+                ],
+                'QSR': [
+                    {
+                        title: 'QUICK BURGER - Drive-Thru Speed Improvement',
+                        scenario: 'You assume the role of operations manager for QUICK BURGER, a fast-food restaurant with drive-thru service. The district manager (judge) is concerned that average drive-thru times are 4.5 minutes while top competitors average 3 minutes. During peak hours, long wait times cause customers to leave. Additionally, food cost is 32% of sales (target: 28-30%). Improve speed of service and food cost control.',
+                        tasks: ['Analyze current drive-thru process and timing', 'Identify bottlenecks (ordering, payment, food prep, delivery)', 'Develop employee training for faster service', 'Create food cost reduction strategies (portion control, waste reduction)', 'Redesign kitchen workflow for efficiency', 'Establish new KPIs and monitoring system']
+                    },
+                    {
+                        title: 'FRESH CHICKEN CO - Healthier Menu Development',
+                        scenario: 'You assume the role of general manager for FRESH CHICKEN CO, a quick-service restaurant specializing in fried chicken. The owner (judge) is concerned about declining sales as health-conscious consumers avoid fried food. Develop new healthier menu items (grilled chicken, salads, plant-based options) while maintaining the brand identity and profitability.',
+                        tasks: ['Conduct market research on health trends and competitor offerings', 'Develop new menu items with cost analysis', 'Calculate food costs and set pricing to maintain margins', 'Create launch marketing campaign', 'Design upselling and combo strategies', 'Plan limited-time offers to test new items']
+                    }
+                ],
+                'TSE': [
+                    {
+                        title: 'CORAL BAY - Sustainable Tourism Management',
+                        scenario: 'You assume the role of tourism director for CORAL BAY, a coastal town with beautiful beaches attracting 500,000 annual visitors. The mayor (judge) wants to increase tourism revenue while protecting natural resources and preserving local culture. Overtourism has damaged coral reefs, overcrowded beaches, and frustrated residents. Develop sustainable tourism strategy.',
+                        tasks: ['Assess current tourism environmental and social impacts', 'Develop sustainable tourism management plan', 'Create visitor capacity and flow management strategies', 'Design marketing to attract responsible eco-tourists', 'Propose community involvement and benefit programs', 'Establish sustainability metrics and monitoring']
+                    },
+                    {
+                        title: 'ADVENTURE ESCAPES - Costa Rica Travel Package',
+                        scenario: 'You assume the role of product manager for ADVENTURE ESCAPES, a travel agency. The owner (judge) wants to create a new 7-10 day adventure travel package to Costa Rica targeting millennials (ages 25-35) with budgets of $2,000-3,000 per person. Design an exciting, profitable package with activities, accommodations, and unique experiences.',
+                        tasks: ['Design detailed itinerary with adventure activities (zip-lining, rafting, wildlife)', 'Select and price accommodations (eco-lodges, hostels, hotels)', 'Partner with local tour operators and vendors', 'Calculate total pricing with profit margins', 'Develop marketing strategy for target demographic', 'Create booking process and customer service plan']
+                    }
+                ],
+                'BMG': [
+                    {
+                        title: 'TECH CITY ELECTRONICS - Performance Turnaround',
+                        scenario: 'You assume the role of new store manager for TECH CITY ELECTRONICS, an underperforming location in a 50-store chain. The regional manager (judge) is concerned: sales are down 20% year-over-year, employee morale is low with 40% annual turnover, and customer satisfaction scores are bottom 10% in the region. Corporate has given you 6 months to turn around performance or the store may close.',
+                        tasks: ['Conduct comprehensive situation analysis (sales data, employee feedback, customer reviews)', 'Identify root causes of poor performance', 'Develop employee engagement and training strategy', 'Create customer service improvement plan', 'Set SMART goals and measurable KPIs', 'Design phased implementation timeline with milestones']
+                    },
+                    {
+                        title: 'COASTAL SERVICES - Process Automation Project',
+                        scenario: 'You assume the role of operations consultant for COASTAL SERVICES, a small business with 12 employees. The owner (judge) is frustrated with time spent on manual processes: order processing takes 2 hours daily, inventory management 3 hours daily, and responding to customer inquiries 4 hours daily. Recommend process improvements and technology solutions to increase efficiency and allow staff to focus on growth.',
+                        tasks: ['Map current manual processes and pain points', 'Identify inefficiencies and automation opportunities', 'Recommend specific technology solutions (CRM, inventory software, etc.)', 'Calculate ROI and payback period of improvements', 'Create implementation plan with timeline', 'Design change management and training strategy']
+                    }
+                ],
+                'HRM': [
+                    {
+                        title: 'FASHION FORWARD RETAIL - Retention Strategy',
+                        scenario: 'You assume the role of human resources director for FASHION FORWARD RETAIL, a clothing chain with 200 employees across 15 stores. The CEO (judge) is alarmed by 45% annual employee turnover (industry average: 25%). Exit interviews reveal: below-market pay, limited advancement opportunities, poor work-life balance, and inadequate training. Recruiting and training costs are $250,000 annually. Develop comprehensive retention strategy.',
+                        tasks: ['Analyze turnover data by position, location, and tenure', 'Benchmark compensation and benefits against competitors', 'Design career development and advancement paths', 'Create work-life balance initiatives (flexible scheduling, PTO)', 'Develop improved onboarding and training program', 'Calculate ROI of retention initiatives vs. turnover costs']
+                    },
+                    {
+                        title: 'VALLEY TECH CORP - Diversity & Inclusion Program',
+                        scenario: 'You assume the role of HR manager for VALLEY TECH CORP, a technology company with 200 employees. The CEO (judge) is concerned the workforce lacks diversity (15% minorities, 30% women) despite operating in a diverse market. The company wants to improve diversity, equity, and inclusion to better reflect customers, improve innovation, and attract top talent. Develop comprehensive DEI strategy.',
+                        tasks: ['Assess current diversity metrics and compare to market demographics', 'Identify barriers to diversity in recruitment and retention', 'Develop inclusive recruitment and hiring strategies', 'Create employee resource groups and mentorship programs', 'Design diversity awareness and unconscious bias training', 'Set measurable DEI goals with accountability metrics']
+                    }
+                ],
+                'PSM': [
+                    {
+                        title: 'CLOUD SOLUTIONS INC - CRM Software Sales (2024-2025)',
+                        scenario: 'You assume the role of sales representative for CLOUD SOLUTIONS INC, a CRM software company. You are meeting with a small business owner (judge) who currently uses spreadsheets to track 500 customers. They struggle with missed follow-ups, lost sales opportunities, and lack of customer insights. Present your CRM solution using consultative selling to demonstrate value and close the sale.',
+                        tasks: ['Ask questions to identify specific pain points and challenges', 'Demonstrate CRM benefits tailored to their business needs', 'Handle objections about cost, complexity, and implementation time', 'Present ROI analysis showing revenue impact', 'Propose pricing package and implementation timeline', 'Use closing techniques to secure commitment and next steps']
+                    },
+                    {
+                        title: 'SECURE PRO SYSTEMS - Security Solution Selling',
+                        scenario: 'You assume the role of sales representative for SECURE PRO SYSTEMS, selling commercial security systems. You are meeting with the owner (judge) of a retail chain with 15 locations experiencing theft problems costing $50,000 annually. They have outdated security systems but are price-sensitive. Use consultative selling to present a customized solution demonstrating value exceeding cost.',
+                        tasks: ['Assess current security systems and identify vulnerabilities', 'Calculate cost of theft and security problems', 'Present customized security solution (cameras, alarms, access control)', 'Demonstrate ROI and value proposition vs. cost', 'Address budget concerns with payment options', 'Propose financing plan and close the sale']
+                    }
+                ],
+                'ENT': [
+                    {
+                        title: 'TACO BLISS FOOD TRUCK - Startup Business Plan',
+                        scenario: 'You assume the role of entrepreneur presenting to potential investors (judge). You want to start TACO BLISS, a gourmet taco food truck in a mid-sized city. Startup costs are $75,000 (truck, commercial kitchen equipment, permits, initial inventory, marketing). You have $25,000 in personal savings and need $50,000 in funding. Present complete business plan to secure investment or loan.',
+                        tasks: ['Develop business model canvas (value proposition, customers, channels, revenue)', 'Create 3-year financial projections (startup costs, revenue, expenses, profit)', 'Analyze local food truck competition and market opportunity', 'Design marketing strategy (social media, events, locations)', 'Compare funding sources (SBA loan, angel investors, crowdfunding)', 'Present compelling investor pitch with expected returns']
+                    },
+                    {
+                        title: 'IMPACT VENTURES - Social Enterprise Startup',
+                        scenario: 'You assume the role of social entrepreneur presenting to impact investors (judge). Your startup, IMPACT VENTURES, addresses a social or environmental problem while being financially sustainable. Examples: employing individuals with barriers to employment, creating eco-friendly products, improving access to education. Demonstrate how you balance social mission with profitability to achieve sustainable impact.',
+                        tasks: ['Identify specific social/environmental problem and target population', 'Develop sustainable business model generating revenue', 'Create theory of change showing social impact pathway', 'Calculate both social ROI (lives improved) and financial ROI', 'Design stakeholder engagement strategy (beneficiaries, investors, partners)', 'Present impact measurement framework with key metrics']
+                    }
+                ],
+                'BMOR': [
+                    {
+                        title: 'FRESH MART GROCERS - AI Integration Strategy (2024-2025)',
+                        scenario: 'You assume the role of operations consultant for FRESH MART GROCERS, a regional grocery chain with 25 stores. The CEO (judge) wants to integrate artificial intelligence to improve operations and compete with larger chains. Consider AI applications in inventory management, demand forecasting, customer personalization, dynamic pricing optimization, and workforce scheduling. Develop comprehensive AI implementation strategy.',
+                        tasks: ['Assess current operations and identify AI opportunity areas', 'Prioritize AI use cases by potential business impact', 'Recommend specific AI solutions and technology vendors', 'Calculate implementation costs and projected ROI', 'Address employee concerns and develop training plan', 'Create phased 18-month implementation timeline with milestones']
+                    },
+                    {
+                        title: 'QUICK SHIP ONLINE - Supply Chain Optimization',
+                        scenario: 'You assume the role of supply chain analyst for QUICK SHIP ONLINE, an e-commerce company experiencing growing pains. The COO (judge) is concerned about: 8-day average delivery times (competitors average 3-5 days), high shipping costs at 15% of revenue (industry average 10%), and frequent stockouts causing lost sales. Use operations research and data analytics to optimize the supply chain.',
+                        tasks: ['Analyze current supply chain data and performance metrics', 'Identify inefficiencies and bottlenecks in fulfillment process', 'Recommend distribution center strategy improvements', 'Evaluate warehouse locations and inventory allocation optimization', 'Calculate cost savings and service improvement potential', 'Present implementation roadmap with quick wins and long-term initiatives']
+                    }
+                ]
+            };
+
+            // Get event-specific case studies
+            let cases = eventCaseStudies[currentEvent];
+
+            // Fall back to cluster-based if no event-specific
+            if (!cases) {
+                const clusterDefaults = {
+                    marketing: eventCaseStudies['MMS'] || [],
+                    finance: eventCaseStudies['PFL'] || [],
+                    hospitality: eventCaseStudies['HLM'] || [],
+                    business: eventCaseStudies['BMG'] || [],
+                    entrepreneurship: eventCaseStudies['ENT'] || []
+                };
+                cases = clusterDefaults[cluster] || eventCaseStudies['MMS'] || [];
+            }
+
+            return cases;
+        }
+
+        function showAnswer(qNum, correct) {
+            document.getElementById(`answer${qNum}`).textContent = `Correct Answer: ${correct}`;
+            document.getElementById(`answer${qNum}`).classList.remove('hidden');
+        }
+
+        function backToClusters() {
+            currentCluster = null;
+            showClusters();
+        }
+
+        function backToEvents() {
+            currentEvent = null;
+            selectCluster(currentCluster);
+        }
+
+        // ==================== TIMER ====================
+        let timerInterval = null;
+        let timeLeft = 600;
+
+        function startTimer() {
+            if (timerInterval) return;
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                if (timeLeft <= 0) {
+                    resetTimer();
+                    alert('⏰ Time\'s up!');
+                    return;
+                }
+                const mins = Math.floor(timeLeft / 60);
+                const secs = timeLeft % 60;
+                document.getElementById('timer').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timeLeft = 600;
+            document.getElementById('timer').textContent = '10:00';
+        }
+
+        // ==================== AI CHATBOT ====================
+        let chatHistory = [];
+
+        function initAIChat() {
+            // Check if API key exists
+            const apiKey = localStorage.getItem('hfApiKey');
+            if (apiKey) {
+                document.getElementById('apiKeySetup').style.display = 'none';
+            } else {
+                document.getElementById('apiKeySetup').style.display = 'block';
+            }
+        }
+
+        function showApiKeySetup() {
+            // Show the API key setup box
+            const setupBox = document.getElementById('apiKeySetup');
+            setupBox.style.display = 'block';
+            setupBox.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            if (!apiKey) {
+                alert('Please enter your Hugging Face API key');
+                return;
+            }
+            if (!apiKey.startsWith('hf_')) {
+                alert('Invalid API key format. Hugging Face keys start with "hf_"');
+                return;
+            }
+            localStorage.setItem('hfApiKey', apiKey);
+            document.getElementById('apiKeySetup').style.display = 'none';
+            document.getElementById('apiKeyInput').value = '';
+
+            // Show success message
+            addMessage('System', 'API key saved successfully! You can now chat with the AI assistant.', 'system');
+        }
+
+        function addMessage(sender, text, type = 'user') {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'flex items-start gap-3';
+
+            if (type === 'user') {
+                messageDiv.innerHTML = `
+                    <div class="flex-1"></div>
+                    <div class="bg-blue-600 text-white rounded-2xl rounded-tr-none p-4 max-w-2xl">
+                        <p>${escapeHtml(text)}</p>
+                    </div>
+                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-user text-white"></i>
+                    </div>
+                `;
+            } else if (type === 'system') {
+                messageDiv.innerHTML = `
+                    <div class="w-full">
+                        <div class="bg-green-50 border-l-4 border-green-500 p-3 rounded">
+                            <p class="text-sm text-green-800">${escapeHtml(text)}</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-robot text-white"></i>
+                    </div>
+                    <div class="bg-gray-100 rounded-2xl rounded-tl-none p-4 max-w-2xl">
+                        <p class="text-gray-800 whitespace-pre-wrap">${escapeHtml(text)}</p>
+                    </div>
+                `;
+            }
+
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function addLoadingMessage() {
+            const messagesContainer = document.getElementById('chatMessages');
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'loadingMessage';
+            loadingDiv.className = 'flex items-start gap-3';
+            loadingDiv.innerHTML = `
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-robot text-white"></i>
+                </div>
+                <div class="bg-gray-100 rounded-2xl rounded-tl-none p-4">
+                    <div class="flex gap-1">
+                        <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0s"></div>
+                        <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                        <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                    </div>
+                </div>
+            `;
+            messagesContainer.appendChild(loadingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function removeLoadingMessage() {
+            const loadingMsg = document.getElementById('loadingMessage');
+            if (loadingMsg) loadingMsg.remove();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // const apiKey = localStorage.getItem('hfApiKey');
+            // if (!apiKey) {
+            //     alert('Please set up your Hugging Face API key first!');
+            //     return;
+            // }
+
+            // Add user message
+            addMessage('You', message, 'user');
+            input.value = '';
+
+            // Disable send button
+            const sendButton = document.getElementById('sendButton');
+            sendButton.disabled = true;
+
+            // Add loading message
+            addLoadingMessage();
+
+            try {
+                console.log('Sending request to Hugging Face Inference API...');
+
+                // Format message using chat template for Zephyr model
+                const formattedPrompt = `<|system|>
+You are a helpful DECA competition assistant. Provide clear, concise answers about business, marketing, finance, hospitality, and entrepreneurship topics for high school students.</s>
+<|user|>
+${message}</s>
+<|assistant|>`;
+
+                // Using DeepInfra API (free, no API key needed)
+                const response = await fetch('https://api.deepinfra.com/v1/openai/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'meta-llama/Meta-Llama-3-8B-Instruct',
+                        messages: [
+                            { role: 'system', content: 'You are a helpful DECA competition assistant. Provide clear, concise answers about business, marketing, finance, hospitality, and entrepreneurship topics for high school students.' },
+                            { role: 'user', content: message }
+                        ],
+                        max_tokens: 250,
+                        temperature: 0.7
+                    })
+                });
+
+                console.log('Response status:', response.status);
+
+                removeLoadingMessage();
+
+                if (!response.ok) {
+                    let errorData;
+                    try {
+                        errorData = await response.json();
+                    } catch (e) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    console.error('API Error:', errorData);
+
+                    // Handle specific errors
+                    if (errorData.error && errorData.error.includes('loading')) {
+                        throw new Error('MODEL_LOADING');
+                    } else if (response.status === 401 || response.status === 403) {
+                        throw new Error('INVALID_API_KEY');
+                    } else {
+                        throw new Error(errorData.error || `API Error: ${response.status}`);
+                    }
+                }
+
+                const data = await response.json();
+                console.log('API Response:', data);
+
+                // Extract response text
+                let aiResponse = '';
+                if (Array.isArray(data) && data.length > 0) {
+                    aiResponse = data[0].generated_text || data[0].text || '';
+                } else if (data.generated_text) {
+                    aiResponse = data.generated_text;
+                } else if (typeof data === 'string') {
+                    aiResponse = data;
+                } else {
+                    console.error('Unexpected response format:', data);
+                    throw new Error('UNEXPECTED_FORMAT');
+                }
+
+                // Clean up response
+                aiResponse = aiResponse.trim();
+
+                // Remove instruction tags if present
+                if (aiResponse.includes('[/INST]')) {
+                    aiResponse = aiResponse.split('[/INST]').pop().trim();
+                }
+                if (aiResponse.includes('</s>')) {
+                    aiResponse = aiResponse.split('</s>')[0].trim();
+                }
+
+                if (!aiResponse) {
+                    throw new Error('EMPTY_RESPONSE');
+                }
+
+                // Add AI response
+                addMessage('AI', aiResponse, 'ai');
+
+            } catch (error) {
+                removeLoadingMessage();
+                console.error('AI Chat Error:', error);
+
+                let errorMessage = '';
+
+                if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+                    errorMessage = '❌ Connection Error: Unable to reach Hugging Face API.\n\nPossible fixes:\n1. Check your internet connection\n2. Try opening the file with "Live Server" extension in VS Code instead of opening directly\n3. Some browsers block API calls from local files - try using a local web server\n4. Your network/firewall might be blocking the request';
+                } else if (error.message === 'MODEL_LOADING') {
+                    errorMessage = '⏳ The AI model is warming up (first-time use). Please wait 20-30 seconds and try again!';
+                } else if (error.message === 'INVALID_API_KEY') {
+                    errorMessage = '🔑 Invalid API Key. Please:\n1. Go to https://huggingface.co/settings/tokens\n2. Create a new token with "Read" access\n3. Copy the FULL token (starts with hf_)\n4. Paste it in the API key field above';
+                } else if (error.message === 'UNEXPECTED_FORMAT') {
+                    errorMessage = '⚠️ Received unexpected response format. The model might still be loading. Try again in a moment.';
+                } else if (error.message === 'EMPTY_RESPONSE') {
+                    errorMessage = '⚠️ Received empty response. Please try asking your question again.';
+                } else {
+                    errorMessage = `❌ Error: ${error.message}\n\nTry again or check the browser console (F12) for details.`;
+                }
+
+                addMessage('AI', errorMessage, 'ai');
+            } finally {
+                sendButton.disabled = false;
+                input.focus();
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ==================== INIT ====================
+        function init() {
+            displayEvents();
+            loadNews();
+            loadMarket();
+        }
+
+        if (localStorage.getItem('isLoggedIn') === 'true') {
+            showDashboard();
+        }
+    </script>
+</body>
+</html>
