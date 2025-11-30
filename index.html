@@ -1171,10 +1171,21 @@
                 personal: true // Flag to identify personal events
             };
 
+            console.log('New event created:', newEvent);
+
             // Get existing personal events and add new one
             const personalEvents = getPersonalEvents();
+            console.log('Existing events before adding:', personalEvents);
+
             personalEvents.push(newEvent);
+            console.log('Events after adding:', personalEvents);
+
             savePersonalEvents(personalEvents);
+            console.log('Events saved to localStorage');
+
+            // Verify save
+            const saved = getPersonalEvents();
+            console.log('Verified saved events:', saved);
 
             // Close modal
             closeAddModal();
@@ -1184,7 +1195,7 @@
 
             // Small delay to ensure display updates before alert
             setTimeout(() => {
-                alert('Event added successfully! Your event "' + newEvent.name + '" has been added.');
+                alert('Event added successfully! Your event "' + newEvent.name + '" has been added.\n\nTotal personal events: ' + saved.length);
             }, 100);
         }
 
