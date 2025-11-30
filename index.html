@@ -141,6 +141,24 @@
                         <div class="bg-white/10 rounded-lg p-3 text-center mb-3">
                             <div class="text-3xl font-bold" id="timer">10:00</div>
                         </div>
+                        <div class="grid grid-cols-3 gap-2 mb-2">
+                            <button onclick="setTimerDuration(5)" class="bg-white/10 hover:bg-white/20 py-1.5 rounded text-xs font-semibold transition">
+                                5 min
+                            </button>
+                            <button onclick="setTimerDuration(10)" class="bg-white/10 hover:bg-white/20 py-1.5 rounded text-xs font-semibold transition">
+                                10 min
+                            </button>
+                            <button onclick="setTimerDuration(15)" class="bg-white/10 hover:bg-white/20 py-1.5 rounded text-xs font-semibold transition">
+                                15 min
+                            </button>
+                        </div>
+                        <div class="mb-2">
+                            <input type="number" id="customTimerInput" min="1" max="999" placeholder="Custom minutes"
+                                   class="w-full px-3 py-2 rounded-lg text-sm bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:border-white/40">
+                            <button onclick="setCustomTimer()" class="w-full mt-1 bg-white/10 hover:bg-white/20 py-1.5 rounded text-xs font-semibold transition">
+                                Set Custom
+                            </button>
+                        </div>
                         <div class="grid grid-cols-2 gap-2">
                             <button onclick="startTimer()" class="bg-green-500 hover:bg-green-600 py-2 rounded-lg text-sm font-semibold transition">
                                 <i class="fas fa-play"></i>
@@ -1182,11 +1200,15 @@
             weatherContainer.innerHTML = html;
         }
 
+        // Track current calendar view
+        let currentCalendarYear = new Date().getFullYear();
+        let currentCalendarMonth = new Date().getMonth();
+
         function renderCalendar() {
             const now = new Date();
             const today = now.getDate();
-            const year = now.getFullYear();
-            const month = now.getMonth();
+            const year = currentCalendarYear;
+            const month = currentCalendarMonth;
 
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -1201,7 +1223,15 @@
             }).sort((a, b) => new Date(a.date) - new Date(b.date));
 
             let html = `
-                <div class="text-center font-bold mb-4">${monthNames[month]} ${year}</div>
+                <div class="flex items-center justify-between mb-4">
+                    <button onclick="changeMonth(-1)" class="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div class="text-center font-bold">${monthNames[month]} ${year}</div>
+                    <button onclick="changeMonth(1)" class="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
                 <div class="calendar mb-4">
                     <div class="text-xs text-gray-500 text-center">S</div>
                     <div class="text-xs text-gray-500 text-center">M</div>
@@ -1259,6 +1289,20 @@
             }
 
             document.getElementById('calendarWidget').innerHTML = html;
+        }
+
+        function changeMonth(direction) {
+            currentCalendarMonth += direction;
+
+            if (currentCalendarMonth > 11) {
+                currentCalendarMonth = 0;
+                currentCalendarYear++;
+            } else if (currentCalendarMonth < 0) {
+                currentCalendarMonth = 11;
+                currentCalendarYear--;
+            }
+
+            renderCalendar();
         }
 
         function showEventDetails(eventName) {
@@ -2644,6 +2688,7 @@ Keep practicing to improve your score!
         // ==================== TIMER ====================
         let timerInterval = null;
         let timeLeft = 600;
+        let timerDuration = 600; // Store the timer duration
 
         function startTimer() {
             if (timerInterval) return;
@@ -2663,8 +2708,31 @@ Keep practicing to improve your score!
         function resetTimer() {
             clearInterval(timerInterval);
             timerInterval = null;
-            timeLeft = 600;
-            document.getElementById('timer').textContent = '10:00';
+            timeLeft = timerDuration;
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            document.getElementById('timer').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function setTimerDuration(minutes) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timerDuration = minutes * 60;
+            timeLeft = timerDuration;
+            document.getElementById('timer').textContent = `${minutes}:00`;
+        }
+
+        function setCustomTimer() {
+            const input = document.getElementById('customTimerInput');
+            const minutes = parseInt(input.value);
+
+            if (!minutes || minutes < 1 || minutes > 999) {
+                alert('Please enter a valid time between 1 and 999 minutes');
+                return;
+            }
+
+            setTimerDuration(minutes);
+            input.value = ''; // Clear input after setting
         }
 
         // ==================== AI CHATBOT ====================
