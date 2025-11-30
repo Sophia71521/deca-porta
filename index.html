@@ -349,12 +349,22 @@
                         <!-- Profile Header -->
                         <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl p-8 mb-6 text-white">
                             <div class="flex items-center gap-6">
-                                <div class="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center">
-                                    <i class="fas fa-user text-5xl"></i>
+                                <div class="relative">
+                                    <div id="profilePictureContainer" class="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center overflow-hidden">
+                                        <i class="fas fa-user text-5xl" id="profilePictureIcon"></i>
+                                        <img id="profilePictureImage" class="w-full h-full object-cover hidden" alt="Profile">
+                                    </div>
+                                    <button onclick="document.getElementById('profilePictureInput').click()" class="absolute bottom-0 right-0 w-8 h-8 bg-white text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-50 transition shadow-lg">
+                                        <i class="fas fa-camera text-sm"></i>
+                                    </button>
+                                    <input type="file" id="profilePictureInput" accept="image/*" class="hidden" onchange="uploadProfilePicture(event)">
                                 </div>
-                                <div>
+                                <div class="flex-1">
                                     <h1 class="text-3xl font-bold mb-2" id="profileName">Student</h1>
                                     <p class="text-blue-100" id="profileEmail">student@example.com</p>
+                                    <button onclick="removeProfilePicture()" id="removeProfilePictureBtn" class="mt-2 text-sm text-blue-200 hover:text-white hidden">
+                                        <i class="fas fa-times-circle mr-1"></i>Remove picture
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -415,18 +425,18 @@
                             </div>
                         </div>
 
-                        <!-- Danger Zone -->
-                        <div class="bg-white rounded-xl shadow-sm p-6 border-2 border-red-200">
-                            <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-red-600">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                Danger Zone
+                        <!-- Delete Account -->
+                        <div class="bg-white rounded-xl shadow-sm p-6">
+                            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                                <i class="fas fa-user-slash text-gray-600"></i>
+                                Delete Account
                             </h2>
-                            <div class="bg-red-50 rounded-lg p-4">
+                            <div class="bg-gray-50 rounded-lg p-4">
                                 <p class="text-sm text-gray-700 mb-3">
-                                    <strong>Delete Account:</strong> Once you delete your account, there is no going back. All your personal events, progress, and data will be permanently deleted.
+                                    Once you delete your account, all your personal events, progress, and data will be permanently removed.
                                 </p>
-                                <button onclick="deleteAccount()" class="bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition">
-                                    <i class="fas fa-trash mr-2"></i>Delete My Account
+                                <button onclick="deleteAccount()" class="bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition">
+                                    <i class="fas fa-trash mr-2"></i>Delete Account
                                 </button>
                             </div>
                         </div>
@@ -1331,25 +1341,90 @@
             const currentUser = localStorage.getItem('currentUser');
             if (!currentUser) return;
 
-            // Get user data from localStorage
-            const userKey = `user_${currentUser}`;
-            const userData = JSON.parse(localStorage.getItem(userKey) || '{}');
+            // Get user data from the users object
+            const users = getUsers();
+            const userData = users[currentUser] || {};
 
             // Display profile information
             document.getElementById('profileName').textContent = userData.name || 'Student';
             document.getElementById('profileEmail').textContent = currentUser;
             document.getElementById('profileFullName').textContent = userData.name || '--';
             document.getElementById('profileEmailDisplay').textContent = currentUser;
-            document.getElementById('profileSchool').textContent = userData.school || '--';
+            document.getElementById('profileSchool').textContent = userData.chapter || '--';
 
             // Display account creation date
-            const createdDate = userData.created || new Date().toISOString();
+            const createdDate = userData.createdAt || new Date().toISOString();
             const date = new Date(createdDate);
             document.getElementById('profileCreated').textContent = date.toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
             });
+
+            // Load profile picture if exists
+            const profilePicture = userData.profilePicture;
+            if (profilePicture) {
+                document.getElementById('profilePictureImage').src = profilePicture;
+                document.getElementById('profilePictureImage').classList.remove('hidden');
+                document.getElementById('profilePictureIcon').classList.add('hidden');
+                document.getElementById('removeProfilePictureBtn').classList.remove('hidden');
+            } else {
+                document.getElementById('profilePictureImage').classList.add('hidden');
+                document.getElementById('profilePictureIcon').classList.remove('hidden');
+                document.getElementById('removeProfilePictureBtn').classList.add('hidden');
+            }
+        }
+
+        function uploadProfilePicture(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file.');
+                return;
+            }
+
+            // Validate file size (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Image size must be less than 2MB.');
+                return;
+            }
+
+            // Read file as data URL
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageData = e.target.result;
+
+                // Save to user data
+                const currentUser = localStorage.getItem('currentUser');
+                const users = getUsers();
+                if (users[currentUser]) {
+                    users[currentUser].profilePicture = imageData;
+                    saveUsers(users);
+
+                    // Update display
+                    document.getElementById('profilePictureImage').src = imageData;
+                    document.getElementById('profilePictureImage').classList.remove('hidden');
+                    document.getElementById('profilePictureIcon').classList.add('hidden');
+                    document.getElementById('removeProfilePictureBtn').classList.remove('hidden');
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeProfilePicture() {
+            const currentUser = localStorage.getItem('currentUser');
+            const users = getUsers();
+            if (users[currentUser]) {
+                delete users[currentUser].profilePicture;
+                saveUsers(users);
+
+                // Update display
+                document.getElementById('profilePictureImage').classList.add('hidden');
+                document.getElementById('profilePictureIcon').classList.remove('hidden');
+                document.getElementById('removeProfilePictureBtn').classList.add('hidden');
+            }
         }
 
         function resetPassword() {
@@ -1377,18 +1452,24 @@
             }
 
             // Get user data
-            const userKey = `user_${currentUser}`;
-            const userData = JSON.parse(localStorage.getItem(userKey) || '{}');
+            const users = getUsers();
+            const userData = users[currentUser];
+
+            if (!userData) {
+                alert('User data not found.');
+                return;
+            }
 
             // Verify current password
-            if (userData.password !== currentPassword) {
+            const hashedCurrentPassword = hashPassword(currentPassword);
+            if (userData.password !== hashedCurrentPassword) {
                 alert('Current password is incorrect.');
                 return;
             }
 
             // Update password
-            userData.password = newPassword;
-            localStorage.setItem(userKey, JSON.stringify(userData));
+            userData.password = hashPassword(newPassword);
+            saveUsers(users);
 
             // Clear form
             document.getElementById('currentPassword').value = '';
@@ -1399,29 +1480,26 @@
         }
 
         function deleteAccount() {
-            const confirmed = confirm('⚠️ WARNING: Are you absolutely sure you want to delete your account?\n\nThis will permanently delete:\n• Your account information\n• All personal events\n• All progress and data\n\nThis action CANNOT be undone!');
+            const confirmed = confirm('Are you sure you want to delete your account?\n\nThis will permanently delete all your data including personal events and progress.');
 
             if (!confirmed) return;
-
-            const doubleConfirm = confirm('This is your last chance. Type your email to confirm deletion.\n\nClick OK only if you are 100% certain.');
-
-            if (!doubleConfirm) return;
 
             const currentUser = localStorage.getItem('currentUser');
             if (!currentUser) return;
 
-            // Delete all user data
-            const userKey = `user_${currentUser}`;
-            const personalEventsKey = `personalEvents_${currentUser}`;
+            // Delete user from users object
+            const users = getUsers();
+            delete users[currentUser];
+            saveUsers(users);
 
-            localStorage.removeItem(userKey);
+            // Delete personal events
+            const personalEventsKey = `personalEvents_${currentUser}`;
             localStorage.removeItem(personalEventsKey);
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('currentUser');
             localStorage.removeItem('userName');
 
             // Redirect to login
-            alert('Your account has been permanently deleted.');
             location.reload();
         }
 
