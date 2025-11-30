@@ -14,7 +14,7 @@ export default async function handler(req, res) {
 
     try {
         // Call Hugging Face API from the server (no CORS issues)
-        const response = await fetch('https://api-inference.huggingface.co/models/microsoft/Phi-3-mini-4k-instruct', {
+        const response = await fetch('https://router.huggingface.co/models/microsoft/Phi-3-mini-4k-instruct', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
