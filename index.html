@@ -1390,12 +1390,14 @@
             // Validate file type
             if (!file.type.startsWith('image/')) {
                 alert('Please select an image file.');
+                event.target.value = ''; // Clear file input
                 return;
             }
 
             // Validate file size (max 2MB)
             if (file.size > 2 * 1024 * 1024) {
                 alert('Image size must be less than 2MB.');
+                event.target.value = ''; // Clear file input
                 return;
             }
 
@@ -1416,6 +1418,9 @@
                     document.getElementById('profilePictureImage').classList.remove('hidden');
                     document.getElementById('profilePictureIcon').classList.add('hidden');
                     document.getElementById('removeProfilePictureBtn').classList.remove('hidden');
+
+                    // Clear file input for next upload
+                    event.target.value = '';
                 }
             };
             reader.readAsDataURL(file);
@@ -1432,6 +1437,9 @@
                 document.getElementById('profilePictureImage').classList.add('hidden');
                 document.getElementById('profilePictureIcon').classList.remove('hidden');
                 document.getElementById('removeProfilePictureBtn').classList.add('hidden');
+
+                // Clear file input so user can re-upload immediately
+                document.getElementById('profilePictureInput').value = '';
             }
         }
 
