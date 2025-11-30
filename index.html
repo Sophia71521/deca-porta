@@ -17,8 +17,7 @@
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
         .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
         .calendar-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; }
-        .calendar-day.event { background: #0055A4; color: white; font-weight: bold; border-radius: 4px; }
-        .calendar-day.today { border: 2px solid #0055A4; border-radius: 4px; }
+        .calendar-day.today { border: 2px solid #0055A4; border-radius: 4px; font-weight: bold; }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -1194,15 +1193,12 @@
 
             const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-            // Get all events for calendar
+            // Get all events for this month
             const allEvents = getAllEvents();
-            const eventDays = allEvents.map(e => {
+            const monthEvents = allEvents.filter(e => {
                 const d = new Date(e.date);
-                if (d.getMonth() === month && d.getFullYear() === year) {
-                    return d.getDate();
-                }
-                return null;
-            }).filter(d => d !== null);
+                return d.getMonth() === month && d.getFullYear() === year;
+            }).sort((a, b) => new Date(a.date) - new Date(b.date));
 
             let html = `
                 <div class="text-center font-bold mb-4">${monthNames[month]} ${year}</div>
@@ -1222,29 +1218,45 @@
 
             for (let day = 1; day <= daysInMonth; day++) {
                 const isToday = day === today && month === now.getMonth() && year === now.getFullYear();
-                const hasEvent = eventDays.includes(day);
-                const classes = `calendar-day ${isToday ? 'today' : ''} ${hasEvent ? 'event' : ''}`;
+                const classes = `calendar-day ${isToday ? 'today' : ''}`;
                 html += `<div class="${classes}">${day}</div>`;
             }
 
             html += '</div>';
 
-            // Add clearer legend
-            html += `
-                <div class="border-t pt-3 mt-3">
-                    <div class="text-xs font-semibold text-gray-700 mb-2">Legend:</div>
-                    <div class="space-y-2 text-xs">
-                        <div class="flex items-center gap-2">
-                            <div class="w-6 h-6 border-2 border-blue-600 rounded flex items-center justify-center font-semibold">${today}</div>
-                            <span class="text-gray-600">= Today</span>
+            // Add events list for this month
+            if (monthEvents.length > 0) {
+                html += `
+                    <div class="border-t pt-3 mt-3">
+                        <div class="text-xs font-semibold text-gray-700 mb-2">Events This Month:</div>
+                        <div class="space-y-2">
+                `;
+
+                monthEvents.forEach(event => {
+                    const eventDate = new Date(event.date);
+                    const dateStr = eventDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    const personalBadge = event.personal ? '<span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded ml-2">Personal</span>' : '';
+
+                    html += `
+                        <div class="text-xs p-2 bg-gray-50 rounded hover:bg-gray-100 transition">
+                            <div class="font-semibold text-blue-600">${dateStr}</div>
+                            <div class="text-gray-800">${event.name}${personalBadge}</div>
+                            <div class="text-gray-500 text-xs">${event.location}</div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-6 h-6 bg-blue-600 text-white rounded flex items-center justify-center font-bold">26</div>
-                            <span class="text-gray-600">= Event Day</span>
+                    `;
+                });
+
+                html += `
                         </div>
                     </div>
-                </div>
-            `;
+                `;
+            } else {
+                html += `
+                    <div class="border-t pt-3 mt-3">
+                        <div class="text-xs text-gray-500 text-center">No events this month</div>
+                    </div>
+                `;
+            }
 
             document.getElementById('calendarWidget').innerHTML = html;
         }
