@@ -373,6 +373,72 @@
         </div>
     </div>
 
+    <!-- Add Event Modal -->
+    <div id="addEventModal" class="modal">
+        <div class="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 my-8">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">Add Personal Event</h2>
+                    <p class="text-gray-600">Add your chapter meetings or custom DECA events</p>
+                </div>
+                <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+
+            <form id="addEventForm" onsubmit="saveNewEvent(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Event Name *</label>
+                    <input type="text" id="eventName" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Chapter Meeting">
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Start Date *</label>
+                        <input type="date" id="eventDate" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">End Date (Optional)</label>
+                        <input type="date" id="eventEndDate" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Location *</label>
+                    <input type="text" id="eventLocation" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., School Library">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Event Type *</label>
+                    <select id="eventType" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Select type...</option>
+                        <option value="Chapter">Chapter Meeting</option>
+                        <option value="Regional">Regional Event</option>
+                        <option value="State">State Event</option>
+                        <option value="Workshop">Workshop</option>
+                        <option value="Competition">Competition</option>
+                        <option value="Fundraiser">Fundraiser</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Description *</label>
+                    <textarea id="eventDescription" required rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Describe your event..."></textarea>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">
+                        <i class="fas fa-plus mr-2"></i>Add Event
+                    </button>
+                    <button type="button" onclick="closeAddModal()" class="px-6 bg-gray-200 py-3 rounded-lg font-bold hover:bg-gray-300">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // ==================== AUTH ====================
         // Simple hash function for password storage (for demo purposes)
@@ -794,9 +860,12 @@
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
+            // Get all events (DECA + personal)
+            const allEvents = getAllEvents();
+
             // Separate upcoming and past events
-            const upcomingEvents = REAL_DECA_EVENTS.filter(e => new Date(e.date) >= today).sort((a, b) => new Date(a.date) - new Date(b.date));
-            const pastEvents = REAL_DECA_EVENTS.filter(e => new Date(e.date) < today).sort((a, b) => new Date(b.date) - new Date(a.date));
+            const upcomingEvents = allEvents.filter(e => new Date(e.date) >= today).sort((a, b) => new Date(a.date) - new Date(b.date));
+            const pastEvents = allEvents.filter(e => new Date(e.date) < today).sort((a, b) => new Date(b.date) - new Date(a.date));
 
             // Display upcoming events
             const upcomingContainer = document.getElementById('eventsContainer');
@@ -827,20 +896,26 @@
                 Conference: 'blue',
                 Leadership: 'purple',
                 Regional: 'green',
-                State: 'orange'
+                State: 'orange',
+                Chapter: 'indigo',
+                Workshop: 'yellow',
+                Competition: 'red',
+                Fundraiser: 'green',
+                Other: 'gray'
             };
             const color = colors[event.type] || 'blue';
             const isPast = daysUntil < 0;
+            const personalBadge = event.personal ? '<span class="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-semibold">Personal</span>' : '';
 
             return `
-                <div onclick="showEventDetails('${event.name}')" class="bg-white rounded-xl shadow-sm p-6 mb-4 cursor-pointer hover:shadow-lg transition border-l-4 border-${color}-500 ${isPast ? 'opacity-75' : ''}">
+                <div onclick="showEventDetails('${event.name.replace(/'/g, "\\'")}')" class="bg-white rounded-xl shadow-sm p-6 mb-4 cursor-pointer hover:shadow-lg transition border-l-4 border-${color}-500 ${isPast ? 'opacity-75' : ''}">
                     <div class="flex items-center gap-4">
                         <div class="bg-gradient-to-br from-${color}-500 to-${color}-600 text-white rounded-xl p-4 text-center min-w-[80px]">
                             <div class="text-3xl font-bold">${isPast ? Math.abs(daysUntil) : daysUntil}</div>
                             <div class="text-xs uppercase">${isPast ? 'days ago' : 'days'}</div>
                         </div>
                         <div class="flex-1">
-                            <h3 class="text-xl font-bold mb-2">${event.name}</h3>
+                            <h3 class="text-xl font-bold mb-2">${event.name}${personalBadge}</h3>
                             <p class="text-gray-600"><i class="far fa-calendar mr-2"></i>${eventDate.toLocaleDateString()}</p>
                             <p class="text-gray-600"><i class="fas fa-map-marker-alt mr-2"></i>${event.location}</p>
                         </div>
@@ -867,8 +942,9 @@
             const weatherContainer = document.getElementById('weatherWidget');
             weatherContainer.innerHTML = '<div class="text-center py-4"><div class="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div>';
 
-            // Get next 2 upcoming events
-            const upcomingEvents = REAL_DECA_EVENTS
+            // Get next 2 upcoming events from all events
+            const allEvents = getAllEvents();
+            const upcomingEvents = allEvents
                 .filter(e => new Date(e.date) >= new Date())
                 .sort((a, b) => new Date(a.date) - new Date(b.date))
                 .slice(0, 2);
@@ -963,7 +1039,9 @@
 
             const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-            const eventDays = REAL_DECA_EVENTS.map(e => {
+            // Get all events for calendar
+            const allEvents = getAllEvents();
+            const eventDays = allEvents.map(e => {
                 const d = new Date(e.date);
                 if (d.getMonth() === month && d.getFullYear() === year) {
                     return d.getDate();
@@ -1017,7 +1095,9 @@
         }
 
         function showEventDetails(eventName) {
-            const event = REAL_DECA_EVENTS.find(e => e.name === eventName);
+            // Find event in all events (DECA + personal)
+            const allEvents = getAllEvents();
+            const event = allEvents.find(e => e.name === eventName);
             if (!event) return;
 
             document.getElementById('eventModalTitle').textContent = event.name;
@@ -1025,7 +1105,16 @@
             document.getElementById('eventModalDescription').textContent = event.description;
             document.getElementById('eventModalLocation').textContent = event.location;
             document.getElementById('eventModalType').textContent = event.type + ' Event';
-            document.getElementById('eventRegistrationLink').href = event.url;
+
+            // Handle link for personal vs DECA events
+            const linkElement = document.getElementById('eventRegistrationLink');
+            if (event.personal) {
+                linkElement.style.display = 'none';
+            } else {
+                linkElement.style.display = '';
+                linkElement.href = event.url;
+            }
+
             document.getElementById('eventModal').classList.add('active');
         }
 
@@ -1034,7 +1123,64 @@
         }
 
         function openAddModal() {
-            alert('Add Personal Event\n\nThis feature lets you add your own chapter meetings and events!');
+            document.getElementById('addEventModal').classList.add('active');
+        }
+
+        function closeAddModal() {
+            document.getElementById('addEventModal').classList.remove('active');
+            document.getElementById('addEventForm').reset();
+        }
+
+        // Get personal events from localStorage for current user
+        function getPersonalEvents() {
+            const currentUser = localStorage.getItem('currentUser');
+            if (!currentUser) return [];
+
+            const key = `personalEvents_${currentUser}`;
+            const stored = localStorage.getItem(key);
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        // Save personal events to localStorage for current user
+        function savePersonalEvents(events) {
+            const currentUser = localStorage.getItem('currentUser');
+            if (!currentUser) return;
+
+            const key = `personalEvents_${currentUser}`;
+            localStorage.setItem(key, JSON.stringify(events));
+        }
+
+        // Save new event from form
+        function saveNewEvent(e) {
+            e.preventDefault();
+
+            const newEvent = {
+                name: document.getElementById('eventName').value,
+                date: document.getElementById('eventDate').value,
+                endDate: document.getElementById('eventEndDate').value || null,
+                location: document.getElementById('eventLocation').value,
+                type: document.getElementById('eventType').value,
+                description: document.getElementById('eventDescription').value,
+                personal: true // Flag to identify personal events
+            };
+
+            // Get existing personal events and add new one
+            const personalEvents = getPersonalEvents();
+            personalEvents.push(newEvent);
+            savePersonalEvents(personalEvents);
+
+            // Close modal and refresh events display
+            closeAddModal();
+            displayEvents();
+
+            // Show success message
+            alert('Event added successfully!');
+        }
+
+        // Get all events (DECA + personal)
+        function getAllEvents() {
+            const personalEvents = getPersonalEvents();
+            return [...REAL_DECA_EVENTS, ...personalEvents];
         }
 
         // ==================== PRACTICE - CLUSTERS ====================
