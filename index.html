@@ -2740,7 +2740,7 @@ Keep practicing to improve your score!
 
         function initAIChat() {
             // Check if API key exists
-            const apiKey = localStorage.getItem('hfApiKey');
+            const apiKey = localStorage.getItem('openRouterApiKey');
             if (apiKey) {
                 document.getElementById('apiKeySetup').style.display = 'none';
             } else {
@@ -2758,14 +2758,14 @@ Keep practicing to improve your score!
         function saveApiKey() {
             const apiKey = document.getElementById('apiKeyInput').value.trim();
             if (!apiKey) {
-                alert('Please enter your Hugging Face API key');
+                alert('Please enter your OpenRouter API key');
                 return;
             }
-            if (!apiKey.startsWith('hf_')) {
-                alert('Invalid API key format. Hugging Face keys start with "hf_"');
+            if (!apiKey.startsWith('sk-or-v1-')) {
+                alert('Invalid API key format. OpenRouter keys start with "sk-or-v1-"');
                 return;
             }
-            localStorage.setItem('hfApiKey', apiKey);
+            localStorage.setItem('openRouterApiKey', apiKey);
             document.getElementById('apiKeySetup').style.display = 'none';
             document.getElementById('apiKeyInput').value = '';
 
@@ -2843,9 +2843,9 @@ Keep practicing to improve your score!
 
             if (!message) return;
 
-            const apiKey = localStorage.getItem('hfApiKey');
+            const apiKey = localStorage.getItem('openRouterApiKey');
             if (!apiKey) {
-                alert('Please set up your Hugging Face API key first!');
+                alert('Please set up your OpenRouter API key first!');
                 return;
             }
 
@@ -2902,10 +2902,10 @@ Keep practicing to improve your score!
                 const data = await response.json();
                 console.log('API Response:', data);
 
-                // Extract response text
+                // Extract response text from OpenRouter format
                 let aiResponse = '';
-                if (Array.isArray(data) && data.length > 0) {
-                    aiResponse = data[0].generated_text || data[0].text || '';
+                if (data.choices && data.choices.length > 0) {
+                    aiResponse = data.choices[0].message?.content || '';
                 } else if (data.generated_text) {
                     aiResponse = data.generated_text;
                 } else if (typeof data === 'string') {
@@ -2917,14 +2917,6 @@ Keep practicing to improve your score!
 
                 // Clean up response
                 aiResponse = aiResponse.trim();
-
-                // Remove instruction tags if present
-                if (aiResponse.includes('[/INST]')) {
-                    aiResponse = aiResponse.split('[/INST]').pop().trim();
-                }
-                if (aiResponse.includes('</s>')) {
-                    aiResponse = aiResponse.split('</s>')[0].trim();
-                }
 
                 if (!aiResponse) {
                     throw new Error('EMPTY_RESPONSE');
@@ -2940,13 +2932,13 @@ Keep practicing to improve your score!
                 let errorMessage = '';
 
                 if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
-                    errorMessage = '❌ Connection Error: Unable to reach Hugging Face API.\n\nPossible fixes:\n1. Check your internet connection\n2. Try opening the file with "Live Server" extension in VS Code instead of opening directly\n3. Some browsers block API calls from local files - try using a local web server\n4. Your network/firewall might be blocking the request';
+                    errorMessage = '❌ Connection Error: Unable to reach OpenRouter API.\n\nPossible fixes:\n1. Check your internet connection\n2. Check if you have entered a valid OpenRouter API key\n3. Your network/firewall might be blocking the request';
                 } else if (error.message === 'MODEL_LOADING') {
                     errorMessage = '⏳ The AI model is warming up (first-time use). Please wait 20-30 seconds and try again!';
                 } else if (error.message === 'INVALID_API_KEY') {
-                    errorMessage = '🔑 Invalid API Key. Please:\n1. Go to https://huggingface.co/settings/tokens\n2. Create a new token with "Read" access\n3. Copy the FULL token (starts with hf_)\n4. Paste it in the API key field above';
+                    errorMessage = '🔑 Invalid API Key. Please:\n1. Go to https://openrouter.ai/keys\n2. Create a new API key\n3. Copy the FULL key (starts with sk-or-v1-)\n4. Paste it in the API key field above';
                 } else if (error.message === 'UNEXPECTED_FORMAT') {
-                    errorMessage = '⚠️ Received unexpected response format. The model might still be loading. Try again in a moment.';
+                    errorMessage = '⚠️ Received unexpected response format. Try again in a moment.';
                 } else if (error.message === 'EMPTY_RESPONSE') {
                     errorMessage = '⚠️ Received empty response. Please try asking your question again.';
                 } else {
