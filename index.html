@@ -888,10 +888,16 @@
 
             // Get all events (DECA + personal)
             const allEvents = getAllEvents();
+            console.log('=== DISPLAY EVENTS ===');
+            console.log('Total events to display:', allEvents.length);
+            console.log('All events:', allEvents);
 
             // Separate upcoming and past events
             const upcomingEvents = allEvents.filter(e => new Date(e.date) >= today).sort((a, b) => new Date(a.date) - new Date(b.date));
             const pastEvents = allEvents.filter(e => new Date(e.date) < today).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            console.log('Upcoming events:', upcomingEvents.length, upcomingEvents);
+            console.log('Past events:', pastEvents.length, pastEvents);
 
             // Display upcoming events
             const upcomingContainer = document.getElementById('eventsContainer');
@@ -899,6 +905,7 @@
                 upcomingContainer.innerHTML = '<p class="text-gray-500 text-center py-8">No upcoming events scheduled</p>';
             } else {
                 const upcomingHtml = upcomingEvents.map(event => renderEventCard(event)).join('');
+                console.log('Rendering HTML for', upcomingEvents.length, 'upcoming events');
                 upcomingContainer.innerHTML = upcomingHtml;
             }
 
